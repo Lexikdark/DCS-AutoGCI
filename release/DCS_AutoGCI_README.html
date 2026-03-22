@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCS Auto-GCI &mdash; Help &amp; User Guide</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: #0d1117;
+    color: #e6edf3;
+    line-height: 1.65;
+    padding: 0;
+  }
+
+  /* ---- scrollbar ---- */
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: #161b22; }
+  ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #484f58; }
+
+  /* ---- sidebar ---- */
+  #sidebar {
+    position: fixed; top: 0; left: 0;
+    width: 230px; height: 100%;
+    background: #161b22;
+    border-right: 1px solid #30363d;
+    padding: 20px 0 40px;
+    overflow-y: auto;
+    z-index: 100;
+  }
+  #sidebar .logo {
+    color: #58a6ff;
+    font-size: 18px;
+    font-weight: 700;
+    padding: 0 20px 16px;
+    border-bottom: 1px solid #30363d;
+    margin-bottom: 10px;
+    letter-spacing: -0.3px;
+  }
+  #sidebar a {
+    display: block;
+    color: #8b949e;
+    text-decoration: none;
+    padding: 7px 20px;
+    font-size: 13.5px;
+    border-left: 3px solid transparent;
+    transition: all 0.15s ease;
+  }
+  #sidebar a:hover {
+    color: #e6edf3;
+    background: #1c2128;
+    border-left-color: #30363d;
+  }
+  #sidebar a.active {
+    color: #e6edf3;
+    background: #1c2128;
+    border-left-color: #58a6ff;
+    font-weight: 600;
+  }
+
+  /* ---- main ---- */
+  #content {
+    margin-left: 230px;
+    padding: 36px 48px 80px;
+    max-width: 900px;
+  }
+
+  h1 {
+    font-size: 30px;
+    color: #58a6ff;
+    margin-bottom: 6px;
+    letter-spacing: -0.5px;
+  }
+  .subtitle {
+    color: #8b949e;
+    font-size: 15px;
+    margin-bottom: 32px;
+  }
+  h2 {
+    font-size: 21px;
+    color: #79c0ff;
+    margin: 40px 0 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #21262d;
+  }
+  h2:first-of-type { margin-top: 0; }
+  h3 {
+    font-size: 16px;
+    color: #d2a8ff;
+    margin: 22px 0 8px;
+  }
+  p, li { font-size: 14px; margin-bottom: 8px; }
+  ul, ol { padding-left: 24px; margin-bottom: 14px; }
+  li { margin-bottom: 5px; }
+  strong { color: #e6edf3; }
+  em { color: #d2a8ff; font-style: italic; }
+  a { color: #58a6ff; }
+
+  /* ---- tables ---- */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0 18px;
+    font-size: 13.5px;
+  }
+  th {
+    background: #161b22;
+    color: #79c0ff;
+    text-align: left;
+    padding: 9px 14px;
+    border: 1px solid #30363d;
+    font-weight: 600;
+  }
+  td {
+    padding: 8px 14px;
+    border: 1px solid #21262d;
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: #0d1117; }
+  tr:nth-child(odd) td { background: #161b22; }
+
+  /* ---- code ---- */
+  code {
+    font-family: 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+    background: #1c2128;
+    color: #7ee787;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+  pre {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 16px 18px;
+    overflow-x: auto;
+    margin: 10px 0 18px;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  pre code { background: none; padding: 0; }
+
+  /* ---- callouts ---- */
+  .note {
+    background: #0d2847;
+    border-left: 4px solid #58a6ff;
+    padding: 12px 16px;
+    border-radius: 4px;
+    margin: 14px 0;
+    font-size: 13.5px;
+  }
+  .warn {
+    background: #3b2607;
+    border-left: 4px solid #d29922;
+    padding: 12px 16px;
+    border-radius: 4px;
+    margin: 14px 0;
+    font-size: 13.5px;
+  }
+
+  /* ---- diagram ---- */
+  .diagram {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 20px 22px;
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 13px;
+    color: #7ee787;
+    white-space: pre;
+    overflow-x: auto;
+    margin: 14px 0 18px;
+    line-height: 1.45;
+  }
+
+  /* ---- badges ---- */
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-right: 6px;
+  }
+  .badge-red { background: #6e2b2b; color: #ff7b72; }
+  .badge-orange { background: #5a3600; color: #ffa657; }
+  .badge-yellow { background: #4a3a00; color: #e3b341; }
+  .badge-green { background: #1a4731; color: #7ee787; }
+
+  section { margin-bottom: 12px; scroll-margin-top: 20px; }
+
+  .footer {
+    text-align: center;
+    color: #484f58;
+    margin-top: 50px;
+    padding-top: 20px;
+    border-top: 1px solid #21262d;
+    font-size: 12px;
+  }
+
+  /* ---- responsive ---- */
+  @media (max-width: 768px) {
+    #sidebar { display: none; }
+    #content { margin-left: 0; padding: 20px 18px 40px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ SIDEBAR ============ -->
+<nav id="sidebar">
+  <div class="logo">DCS Auto-GCI</div>
+  <a href="#overview">Overview</a>
+  <a href="#features">Features</a>
+  <a href="#requirements">Requirements</a>
+  <a href="#install">Installation</a>
+  <a href="#uninstall">Uninstalling</a>
+  <a href="#usage">Usage &amp; Settings</a>
+  <a href="#howitworks">How It Works</a>
+  <a href="#detection">Detection Methods</a>
+  <a href="#luaconfig">Lua Configuration</a>
+  <a href="#hooksetup">Hook Script Setup</a>
+  <a href="#testing">Testing Without DCS</a>
+  <a href="#ttsvoices">Adding TTS Voices</a>
+  <a href="#troubleshooting">Troubleshooting</a>
+  <a href="#building">Building from Source</a>
+  <a href="#files">File Structure</a>
+</nav>
+
+<!-- ============ MAIN CONTENT ============ -->
+<main id="content">
+
+<!-- OVERVIEW -->
+<section id="overview">
+  <h1>DCS Auto-GCI</h1>
+  <p class="subtitle">Standalone GCI / Threat Warning companion for DCS World</p>
+  <p>DCS Auto-GCI is a Windows application that runs alongside DCS World and provides real-time threat awareness.
+     It detects enemy aircraft, SAM sites, AAA, and incoming missiles &mdash; then displays them on screen and announces
+     them via text-to-speech with clock position, distance, and altitude.</p>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <h2>Features</h2>
+  <table>
+    <tr><th>Feature</th><th>Details</th></tr>
+    <tr><td>Enemy aircraft detection</td><td>Bandits within ~80 nm shown with clock position, distance, altitude</td></tr>
+    <tr><td>SAM / AAA detection</td><td>Ground threats displayed with bearing and range</td></tr>
+    <tr><td>Missile warning</td><td>Incoming missiles announced immediately</td></tr>
+    <tr><td>Mission events</td><td>Shot launches, hits, and gun fire detected (with optional hook script)</td></tr>
+    <tr><td>Text-to-speech</td><td>Spoken callouts like <em>"Warning! Missile, 3 o'clock, 12 miles"</em></td></tr>
+    <tr><td>Voice &amp; device selection</td><td>Choose any installed Windows SAPI5 voice and audio output device</td></tr>
+    <tr><td>Visual threat table</td><td>Color-coded: <span class="badge badge-red">Red = Weapons</span>
+        <span class="badge badge-orange">Orange = Air</span>
+        <span class="badge badge-yellow">Yellow = Ground</span></td></tr>
+    <tr><td>Event log</td><td>Timestamped history of all threat events</td></tr>
+    <tr><td>Integrated settings</td><td>All options in a built-in settings panel &mdash; no separate dialogs</td></tr>
+  </table>
+</section>
+
+<!-- REQUIREMENTS -->
+<section id="requirements">
+  <h2>Requirements</h2>
+  <ul>
+    <li><strong>DCS World</strong> &mdash; any edition (Stable or Open Beta)</li>
+    <li><strong>Windows 10 or 11</strong> &mdash; SAPI5 text-to-speech is built into Windows</li>
+  </ul>
+  <p>If running from source instead of the installer:</p>
+  <ul>
+    <li><strong>Python 3.8+</strong></li>
+    <li><strong>comtypes</strong> &mdash; <code>pip install comtypes</code></li>
+  </ul>
+</section>
+
+<!-- INSTALLATION -->
+<section id="install">
+  <h2>Installation</h2>
+
+  <h3>Option A: Setup Installer (Recommended)</h3>
+  <ol>
+    <li>Run <code>DCS_AutoGCI_Setup.exe</code></li>
+    <li>Click <strong>Install</strong> &mdash; the installer automatically:
+      <ul>
+        <li>Places <code>DCS Auto-GCI.exe</code> in your local app data</li>
+        <li>Installs the DCS Lua scripts to <code>Saved Games\DCS\Scripts</code> and <code>Saved Games\DCS.openbeta\Scripts</code></li>
+        <li>Creates Desktop and Start Menu shortcuts</li>
+      </ul>
+    </li>
+    <li>Launch <strong>DCS Auto-GCI</strong> from the Desktop or Start Menu</li>
+  </ol>
+
+  <h3>Option B: Run from Source</h3>
+  <pre><code>cd C:\DCS-ThreatWarner
+pip install -r requirements.txt
+python auto_gci.py</code></pre>
+  <p>Then manually copy the Lua scripts:</p>
+
+  <p><strong>Export script (required):</strong></p>
+  <pre><code>Copy:  dcs_lua\ThreatWarnerExport.lua
+To:    %USERPROFILE%\Saved Games\DCS\Scripts\ThreatWarnerExport.lua
+       %USERPROFILE%\Saved Games\DCS.openbeta\Scripts\ThreatWarnerExport.lua</code></pre>
+
+  <p><strong>Hook script (optional):</strong></p>
+  <pre><code>Copy:  dcs_lua\ThreatWarnerHook.lua
+To:    %USERPROFILE%\Saved Games\DCS\Scripts\Hooks\ThreatWarnerHook.lua
+       %USERPROFILE%\Saved Games\DCS.openbeta\Scripts\Hooks\ThreatWarnerHook.lua</code></pre>
+
+  <div class="note">
+    <strong>Already have an Export.lua?</strong> (e.g., for SRS, Helios, DCS-BIOS)<br>
+    Open your existing <code>Export.lua</code> in a text editor and paste the code below
+    at the <em>end</em> of the file. The script is designed to chain with
+    existing export callbacks.
+  </div>
+
+  <p><strong>Code to copy &amp; paste into your existing Export.lua:</strong></p>
+  <pre><code>-- ============================================================================
+--  DCS Auto-GCI — Export Script (append this to your existing Export.lua)
+-- ============================================================================
+do
+    local TW_HOST     = "127.0.0.1"
+    local TW_PORT     = 9876
+    local TW_INTERVAL = 0.1
+    local TW_MAX_RANGE_M = 150000
+    local TW_MAX_WPN_M   = 300000
+
+    local tw_udp, tw_started = nil, false
+
+    local function tw_initSocket()
+        package.path  = package.path  .. ";.\\LuaSocket\\?.lua"
+        package.cpath = package.cpath .. ";.\\LuaSocket\\?.dll"
+        local ok, s = pcall(require, "socket")
+        if not ok then return nil end
+        return s
+    end
+
+    local function tw_send(msg)
+        if tw_udp then pcall(function() tw_udp:send(msg) end) end
+    end
+
+    local function tw_isEnemy(a, b)
+        if a == nil or b == nil or a == b then return false end
+        if b == 0 or b == "0" or b == "" or b == "Neutral" or b == "Neutrals" then return false end
+        return true
+    end
+
+    local function tw_approxDistM(lat1, lon1, lat2, lon2)
+        local dlat = lat1 - lat2
+        local dlon = (lon1 - lon2) * math.cos(math.rad((lat1 + lat2) / 2))
+        return math.sqrt(dlat*dlat + dlon*dlon) * 111320
+    end
+
+    local tw_prevStart     = LuaExportStart
+    local tw_prevStop      = LuaExportStop
+    local tw_prevNextEvent = LuaExportActivityNextEvent
+    local tw_prevBefore    = LuaExportBeforeNextFrame
+    local tw_prevAfter     = LuaExportAfterNextFrame
+
+    LuaExportStart = function()
+        local s = tw_initSocket()
+        if s then
+            tw_udp = s.udp(); tw_udp:settimeout(0)
+            tw_udp:setpeername(TW_HOST, TW_PORT)
+            tw_send("STATUS:CONNECTED"); tw_started = true
+        end
+        if tw_prevStart then tw_prevStart() end
+    end
+
+    LuaExportStop = function()
+        if tw_started then
+            tw_send("STATUS:DISCONNECTED")
+            if tw_udp then pcall(function() tw_udp:close() end) end
+            tw_udp, tw_started = nil, false
+        end
+        if tw_prevStop then tw_prevStop() end
+    end
+
+    LuaExportActivityNextEvent = function(t)
+        if not tw_started then
+            if tw_prevNextEvent then return tw_prevNextEvent(t) end
+            return t + 1.0
+        end
+        local selfOk, selfData = pcall(LoGetSelfData)
+        if selfOk and selfData then
+            tw_send(string.format("SELF:%s|%.6f|%.6f|%.1f|%.4f",
+                selfData.Name or "Unknown",
+                selfData.LatLongAlt.Lat, selfData.LatLongAlt.Long,
+                selfData.LatLongAlt.Alt, selfData.Heading))
+            local myCoal, myLat, myLon = selfData.Coalition,
+                selfData.LatLongAlt.Lat, selfData.LatLongAlt.Long
+            local wOk, objects = pcall(LoGetWorldObjects)
+            if wOk and objects then
+                for id, obj in pairs(objects) do
+                    if tw_isEnemy(myCoal, obj.Coalition) and obj.Type and obj.LatLongAlt then
+                        local lvl1, cat, maxR = obj.Type.level1, nil, TW_MAX_RANGE_M
+                        if lvl1 == 4 and obj.Type.level2 ~= 1 then
+                            cat, maxR = "WEAPON", TW_MAX_WPN_M
+                        elseif lvl1 == 1 then cat = "AIR"
+                        elseif lvl1 == 2 then cat = "GROUND" end
+                        if cat then
+                            local d = tw_approxDistM(myLat, myLon,
+                                obj.LatLongAlt.Lat, obj.LatLongAlt.Long)
+                            if d &lt; maxR then
+                                tw_send(string.format(
+                                    "THREAT:%s|%s|%s|%.6f|%.6f|%.1f|%.4f|%d",
+                                    cat, tostring(id), obj.Name or "Unknown",
+                                    obj.LatLongAlt.Lat, obj.LatLongAlt.Long,
+                                    obj.LatLongAlt.Alt, obj.Heading or 0,
+                                    type(obj.Coalition)=="number" and obj.Coalition or 0))
+                            end
+                        end
+                    end
+                end
+            end
+            local twsOk, twsInfo = pcall(LoGetTWSInfo)
+            if twsOk and twsInfo and twsInfo.Targets then
+                for i, tgt in ipairs(twsInfo.Targets) do
+                    if tgt.Position then
+                        tw_send(string.format("THREAT:AIR|tws_%d|TWS Contact|%.6f|%.6f|%.1f|0|0",
+                            i, tgt.Position.Lat or 0, tgt.Position.Long or 0, tgt.Position.Alt or 0))
+                    end
+                end
+            end
+            local ltOk, locked = pcall(LoGetLockedTargetInformation)
+            if ltOk and locked and locked.LatLongAlt then
+                tw_send(string.format("THREAT:AIR|locked_0|Locked Target|%.6f|%.6f|%.1f|0|0",
+                    locked.LatLongAlt.Lat or 0, locked.LatLongAlt.Long or 0, locked.LatLongAlt.Alt or 0))
+            end
+        end
+        local nextTime = t + TW_INTERVAL
+        if tw_prevNextEvent then
+            local ot = tw_prevNextEvent(t)
+            if ot and ot &lt; nextTime then nextTime = ot end
+        end
+        return nextTime
+    end
+
+    LuaExportBeforeNextFrame = function()
+        if tw_prevBefore then tw_prevBefore() end
+    end
+    LuaExportAfterNextFrame = function()
+        if tw_prevAfter then tw_prevAfter() end
+    end
+end</code></pre>
+</section>
+
+<!-- UNINSTALLING -->
+<section id="uninstall">
+  <h2>Uninstalling</h2>
+  <p>Two ways to uninstall:</p>
+  <ol>
+    <li>Run <code>DCS_AutoGCI_Setup.exe</code> again &mdash; it will show an <strong>Uninstall</strong> button</li>
+    <li>Go to <strong>Windows Settings &rarr; Apps &rarr; DCS Auto-GCI &rarr; Uninstall</strong></li>
+  </ol>
+  <p>The uninstaller removes:</p>
+  <ul>
+    <li>The application executable and shortcuts</li>
+    <li>All Lua scripts from DCS Saved Games folders</li>
+    <li>The settings file (<code>autogci_settings.json</code>)</li>
+  </ul>
+</section>
+
+<!-- USAGE -->
+<section id="usage">
+  <h2>Usage &amp; Settings</h2>
+  <ol>
+    <li>Start <strong>DCS Auto-GCI</strong> (from shortcut or <code>python auto_gci.py</code>)</li>
+    <li>Start a DCS mission &mdash; the app shows <strong>"CONNECTED"</strong> when receiving data</li>
+    <li>Threats appear in the color-coded table and are announced via TTS</li>
+  </ol>
+
+  <h3>Settings Panel</h3>
+  <p>The right side of the app window contains an integrated settings panel:</p>
+  <table>
+    <tr><th>Setting</th><th>Description</th></tr>
+    <tr><td>TTS Voice</td><td>Select from all installed Windows SAPI5 voices</td></tr>
+    <tr><td>Audio Output</td><td>Choose which audio device plays the TTS callouts</td></tr>
+    <tr><td>Speech Rate</td><td>Adjust TTS speed (words per minute)</td></tr>
+    <tr><td>Volume</td><td>Adjust TTS volume (0&ndash;100)</td></tr>
+    <tr><td>Max Threat Range</td><td>Detection range in nautical miles</td></tr>
+    <tr><td>Threat Timeout</td><td>Seconds before a threat is removed from the table</td></tr>
+    <tr><td>Test TTS</td><td>Speaks a sample callout to verify your voice and device selection</td></tr>
+    <tr><td style="color:#7ee787;">&#9889; Unlock OneCore Voices</td><td>One-click button that unlocks ~20 hidden high-quality Windows voices (Aria, Jenny, Guy, etc.). Requires a one-time admin prompt</td></tr>
+  </table>
+  <p>Settings are saved automatically to <code>autogci_settings.json</code> and persist across sessions.</p>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="howitworks">
+  <h2>How It Works</h2>
+  <div class="diagram">&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;        UDP (localhost:9876)       &#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;
+&#9474;      DCS World      &#9474; &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9658; &#9474;   DCS Auto-GCI      &#9474;
+&#9474;                     &#9474;   Player pos, threats,      &#9474;   (Python app)       &#9474;
+&#9474;  Export.lua polls   &#9474;   mission events             &#9474;                     &#9474;
+&#9474;  LoGetSelfData()    &#9474;                              &#9474;  &#8226; Bearing/distance  &#9474;
+&#9474;  LoGetWorldObjects()&#9474;                              &#9474;  &#8226; Clock position    &#9474;
+&#9474;                     &#9474;                              &#9474;  &#8226; GUI display       &#9474;
+&#9474;  Hook script sends  &#9474;                              &#9474;  &#8226; TTS callouts      &#9474;
+&#9474;  shot/hit events    &#9474;                              &#9474;                     &#9474;
+&#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;                              &#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;</div>
+  <p>The DCS Export script runs inside DCS World and polls player and world data 10 times per second.
+     It sends JSON-formatted threat data via UDP to the Auto-GCI app on <code>localhost:9876</code>.
+     The Python app receives the data, calculates bearings and clock positions relative to the player,
+     and displays threats in a color-coded table while announcing them via text-to-speech.</p>
+</section>
+
+<!-- DETECTION -->
+<section id="detection">
+  <h2>Detection Methods</h2>
+  <table>
+    <tr><th>Method</th><th>Source</th><th>Notes</th></tr>
+    <tr><td><code>LoGetWorldObjects()</code></td><td>Export.lua</td><td>Works in most DCS versions; may be restricted on multiplayer anti-cheat servers</td></tr>
+    <tr><td><code>LoGetTWSInfo()</code></td><td>Export.lua</td><td>F-15C specific &mdash; provides TWS radar contacts</td></tr>
+    <tr><td><code>LoGetLockedTargetInformation()</code></td><td>Export.lua</td><td>Works on most aircraft with radar</td></tr>
+    <tr><td>Mission events (<code>S_EVENT_SHOT</code>, etc.)</td><td>Hook script</td><td>Very reliable; requires MissionScripting.lua modification</td></tr>
+  </table>
+</section>
+
+<!-- LUA CONFIG -->
+<section id="luaconfig">
+  <h2>Lua Script Configuration</h2>
+  <p>Edit the constants at the top of each Lua file if needed:</p>
+  <table>
+    <tr><th>Setting</th><th>Default</th><th>Description</th></tr>
+    <tr><td><code>TW_PORT</code></td><td>9876</td><td>UDP port (must match the Python app)</td></tr>
+    <tr><td><code>TW_INTERVAL</code></td><td>0.1</td><td>Polling interval in seconds</td></tr>
+    <tr><td><code>TW_MAX_RANGE_M</code></td><td>150000</td><td>Max detection range for air/ground (meters)</td></tr>
+    <tr><td><code>TW_MAX_WPN_M</code></td><td>300000</td><td>Max detection range for weapons (meters)</td></tr>
+  </table>
+</section>
+
+<!-- HOOK SCRIPT -->
+<section id="hooksetup">
+  <h2>Hook Script Setup (Optional)</h2>
+  <p>The hook script provides mission event detection (missile launches, hits, etc.) on top of the polling-based detection. It needs LuaSocket available in the mission environment:</p>
+  <ol>
+    <li>Navigate to your DCS installation folder</li>
+    <li>Edit <code>Scripts\MissionScripting.lua</code></li>
+    <li>Find and <strong>comment out</strong> these two lines (add <code>--</code> in front):
+      <pre><code>--sanitizeModule('os')
+--sanitizeModule('io')</code></pre>
+    </li>
+  </ol>
+  <div class="note">
+    This is the same change required by MOOSE, MIST, and other DCS scripting frameworks.
+    If you already use those, you likely have this done.
+  </div>
+</section>
+
+<!-- TESTING -->
+<section id="testing">
+  <h2>Testing Without DCS</h2>
+  <p>You can verify the app works without launching DCS:</p>
+  <ol>
+    <li>Start the app (from shortcut or <code>python auto_gci.py</code>)</li>
+    <li>Open a second terminal and run: <code>python test_sender.py</code></li>
+    <li>The test sender runs a scripted 90-second combat scenario featuring:
+      <ul>
+        <li>SAM sites activating (SA-11, S-300, SA-6, Tor, Pantsir)</li>
+        <li>Formation flights (4-ship MiG-29s, 2-ship Flankers, 3x Hinds)</li>
+        <li>Missile launches and events (R-27ER, R-77, R-37M, 9M38)</li>
+        <li>Ships, helicopters, and bombers with escort</li>
+      </ul>
+    </li>
+    <li>Formation grouping callouts play &mdash; e.g. <em>&ldquo;Group of 4, Mig 29, 3 o'clock, 65 miles, Angels 20&rdquo;</em></li>
+  </ol>
+</section>
+
+<!-- TTS VOICES -->
+<section id="ttsvoices">
+  <h2>Adding More TTS Voices</h2>
+  <p>The app lists every SAPI5 voice installed on your Windows system. By default you get
+     <strong>Microsoft David</strong> (male) and <strong>Microsoft Zira</strong> (female).</p>
+
+  <h3>Method 1: Windows Speech Settings</h3>
+  <ol>
+    <li>Open <strong>Settings &rarr; Time &amp; Language &rarr; Speech</strong></li>
+    <li>Under "Manage voices", click <strong>Add voices</strong></li>
+    <li>Select and install additional voices</li>
+    <li>Restart the app &mdash; new voices appear in the dropdown</li>
+  </ol>
+
+  <h3>Method 2: Install Language Packs</h3>
+  <ol>
+    <li>Open <strong>Settings &rarr; Time &amp; Language &rarr; Language &amp; Region</strong></li>
+    <li>Click <strong>Add a language</strong> and install a language pack (e.g., English UK adds Microsoft Hazel)</li>
+    <li>Each pack adds one or more voices</li>
+  </ol>
+
+  <h3>Method 3: Unlock OneCore Voices (One-Click)</h3>
+  <p>Windows 10/11 ships with <strong>~20+ hidden "OneCore" voices</strong> used by Narrator and Cortana.
+     These are higher-quality voices (Aria, Jenny, Guy, Ryan, etc.) that Microsoft doesn't expose to
+     third-party SAPI5 apps by default.</p>
+
+  <p><strong>DCS Auto-GCI can unlock them automatically:</strong></p>
+  <ol>
+    <li>Open the app and go to the <strong>Settings</strong> panel</li>
+    <li>Click the green <strong>&#9889; Unlock OneCore Voices</strong> button</li>
+    <li>Click <strong>Yes</strong> on the Windows admin (UAC) prompt that appears</li>
+    <li>The Voice dropdown refreshes automatically &mdash; select your new voice!</li>
+  </ol>
+
+  <div style="margin:14px 0 18px;">
+    <svg viewBox="0 0 560 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:560px;border-radius:8px;">
+      <!-- App settings panel mockup -->
+      <rect x="0" y="0" width="560" height="200" rx="8" fill="#161b22"/>
+      <rect x="0" y="0" width="560" height="28" rx="8" fill="#1c2128"/>
+      <rect x="0" y="20" width="560" height="8" fill="#1c2128"/>
+      <text x="16" y="19" fill="#79c0ff" font-family="Consolas,monospace" font-size="11" font-weight="700">TEXT-TO-SPEECH</text>
+      <!-- Voice dropdown -->
+      <text x="16" y="52" fill="#e0e0e0" font-family="Consolas,monospace" font-size="11">Voice:</text>
+      <rect x="120" y="38" width="200" height="22" rx="3" fill="#0d1117" stroke="#30363d" stroke-width="1"/>
+      <text x="128" y="54" fill="#7ee787" font-family="Consolas,monospace" font-size="10">Microsoft Aria</text>
+      <text x="300" y="54" fill="#484f58" font-family="Consolas,monospace" font-size="10">&#9660;</text>
+      <!-- Audio Out -->
+      <text x="16" y="80" fill="#e0e0e0" font-family="Consolas,monospace" font-size="11">Audio Out:</text>
+      <rect x="120" y="66" width="200" height="22" rx="3" fill="#0d1117" stroke="#30363d" stroke-width="1"/>
+      <text x="128" y="82" fill="#aaa" font-family="Consolas,monospace" font-size="10">Default Audio Device</text>
+      <!-- Volume slider -->
+      <text x="16" y="108" fill="#e0e0e0" font-family="Consolas,monospace" font-size="11">Volume:</text>
+      <rect x="120" y="97" width="160" height="8" rx="4" fill="#0d1117"/>
+      <rect x="120" y="97" width="128" height="8" rx="4" fill="#30363d"/>
+      <circle cx="248" cy="101" r="6" fill="#58a6ff"/>
+      <text x="290" y="106" fill="#aaa" font-family="Consolas,monospace" font-size="10">80</text>
+      <!-- Buttons row -->
+      <rect x="16" y="124" width="100" height="28" rx="5" fill="#2a6ebb"/>
+      <text x="38" y="143" fill="#fff" font-family="Consolas,monospace" font-size="10" font-weight="600">Test TTS</text>
+      <!-- OneCore button highlighted -->
+      <rect x="124" y="124" width="210" height="28" rx="5" fill="#238636" stroke="#7ee787" stroke-width="1.5" stroke-dasharray="0"/>
+      <text x="136" y="143" fill="#fff" font-family="Consolas,monospace" font-size="10" font-weight="700">&#9889; Unlock OneCore Voices</text>
+      <!-- Arrow annotation -->
+      <line x1="340" y1="138" x2="380" y2="138" stroke="#ffa657" stroke-width="2" marker-end="url(#arrowOC)"/>
+      <defs><marker id="arrowOC" markerWidth="8" markerHeight="6" refX="0" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6Z" fill="#ffa657"/></marker></defs>
+      <text x="386" y="132" fill="#ffa657" font-family="Segoe UI,sans-serif" font-size="12" font-weight="600">Click this button!</text>
+      <text x="386" y="150" fill="#8b949e" font-family="Segoe UI,sans-serif" font-size="10">Unlocks ~20 voices instantly.</text>
+      <text x="386" y="166" fill="#8b949e" font-family="Segoe UI,sans-serif" font-size="10">UAC admin prompt will appear.</text>
+      <!-- Result text -->
+      <text x="16" y="180" fill="#7ee787" font-family="Consolas,monospace" font-size="10">[LOG] Unlocked 18 OneCore voice(s)! Total voices: 20</text>
+      <text x="16" y="196" fill="#8b949e" font-family="Consolas,monospace" font-size="9">Voice dropdown refreshes automatically &mdash; no restart needed.</text>
+    </svg>
+  </div>
+
+  <div class="note">
+    <strong>What happens behind the scenes:</strong> The app exports the OneCore registry keys,
+    rewrites the paths from <code>Speech_OneCore</code> to <code>Speech</code>, and imports them
+    into the standard SAPI5 location. This is the same process as the manual method below, fully automated.
+  </div>
+
+  <div class="warn">
+    <strong>Note:</strong> This requires a one-time administrator (UAC) prompt because it writes to
+    <code>HKEY_LOCAL_MACHINE</code>. The app only <em>adds</em> keys &mdash; it never deletes or modifies
+    existing voices.
+  </div>
+
+  <!-- ── MANUAL FALLBACK ── -->
+  <details style="margin:18px 0;">
+  <summary style="cursor:pointer; color:#d2a8ff; font-weight:600; font-size:15px;">Manual Method (if you prefer to do it by hand)</summary>
+  <div style="padding:12px 0 0 8px;">
+
+  <p>If the one-click button doesn't work for your system, you can do it manually:</p>
+
+  <!-- ── STEP 1 ── -->
+  <h3 style="color:#58a6ff; margin-top:28px;">Step 1 &mdash; Open Registry Editor as Administrator</h3>
+  <p>Press <code>Win + R</code> to open the Run dialog, type <code>regedit</code>, and press Enter.
+     Click <strong>Yes</strong> on the UAC prompt.</p>
+
+  <div style="margin:14px 0 18px;">
+    <svg viewBox="0 0 520 140" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:520px;border-radius:8px;">
+      <!-- Window frame -->
+      <rect x="0" y="0" width="520" height="140" rx="8" fill="#2d2d2d"/>
+      <rect x="0" y="0" width="520" height="30" rx="8" fill="#3c3c3c"/>
+      <rect x="0" y="22" width="520" height="8" fill="#3c3c3c"/>
+      <text x="18" y="20" fill="#ccc" font-family="Segoe UI,sans-serif" font-size="12" font-weight="600">Run</text>
+      <!-- Close / Min / Max -->
+      <rect x="480" y="8" width="28" height="16" rx="3" fill="#c42b1c"/>
+      <text x="489" y="20" fill="#fff" font-family="Segoe UI,sans-serif" font-size="12">&#10005;</text>
+      <!-- Label -->
+      <text x="20" y="58" fill="#e0e0e0" font-family="Segoe UI,sans-serif" font-size="13">Open:</text>
+      <!-- Input box -->
+      <rect x="65" y="42" width="360" height="26" rx="3" fill="#1e1e1e" stroke="#555" stroke-width="1"/>
+      <text x="75" y="60" fill="#7ee787" font-family="Consolas,monospace" font-size="13">regedit</text>
+      <!-- OK button -->
+      <rect x="440" y="42" width="60" height="26" rx="4" fill="#2a6ebb"/>
+      <text x="458" y="60" fill="#fff" font-family="Segoe UI,sans-serif" font-size="12" font-weight="600">OK</text>
+      <!-- Hint -->
+      <text x="20" y="100" fill="#8b949e" font-family="Segoe UI,sans-serif" font-size="11">Press  Win + R  to open this dialog, type  regedit , then click OK.</text>
+      <text x="20" y="120" fill="#8b949e" font-family="Segoe UI,sans-serif" font-size="11">Click  Yes  when the UAC prompt appears (admin is required).</text>
+    </svg>
+  </div>
+
+  <!-- ── STEP 2 ── -->
+  <h3 style="color:#58a6ff; margin-top:28px;">Step 2 &mdash; Navigate to the OneCore Voices</h3>
+  <p>In the left pane of Registry Editor, expand the tree to:</p>
+  <pre><code>HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech_OneCore\Voices\Tokens</code></pre>
+  <p>You'll see subkeys for each hidden voice. Names hint at the language and voice:</p>
+
+  <div style="margin:14px 0 18px;">
+    <svg viewBox="0 0 600 300" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:600px;border-radius:8px;">
+      <!-- Window -->
+      <rect x="0" y="0" width="600" height="300" rx="8" fill="#1e1e1e"/>
+      <rect x="0" y="0" width="600" height="28" rx="8" fill="#3c3c3c"/>
+      <rect x="0" y="20" width="600" height="8" fill="#3c3c3c"/>
+      <text x="16" y="19" fill="#ccc" font-family="Segoe UI,sans-serif" font-size="11" font-weight="600">Registry Editor</text>
+      <!-- Divider -->
+      <line x1="240" y1="28" x2="240" y2="300" stroke="#333" stroke-width="1"/>
+      <!-- Address bar -->
+      <rect x="8" y="34" width="584" height="22" rx="3" fill="#2d2d2d" stroke="#444" stroke-width="1"/>
+      <text x="16" y="50" fill="#79c0ff" font-family="Consolas,monospace" font-size="10">Computer\HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech_OneCore\Voices\Tokens</text>
+      <!-- Tree left pane -->
+      <text x="14" y="78" fill="#888" font-family="Segoe UI,sans-serif" font-size="12">&#9660; HKEY_LOCAL_MACHINE</text>
+      <text x="30" y="96" fill="#888" font-family="Segoe UI,sans-serif" font-size="12">&#9660; SOFTWARE</text>
+      <text x="46" y="114" fill="#888" font-family="Segoe UI,sans-serif" font-size="12">&#9660; Microsoft</text>
+      <text x="62" y="132" fill="#888" font-family="Segoe UI,sans-serif" font-size="12">&#9660; Speech_OneCore</text>
+      <text x="78" y="150" fill="#888" font-family="Segoe UI,sans-serif" font-size="12">&#9660; Voices</text>
+      <text x="94" y="168" fill="#e6edf3" font-family="Segoe UI,sans-serif" font-size="12" font-weight="700">&#9660; Tokens</text>
+      <!-- Voice subkeys - highlighted -->
+      <rect x="106" y="174" width="128" height="17" rx="2" fill="#264f78" opacity="0.6"/>
+      <text x="112" y="187" fill="#7ee787" font-family="Consolas,monospace" font-size="11">MSTTS_V110_enUS_AriaM</text>
+      <text x="112" y="205" fill="#d2a8ff" font-family="Consolas,monospace" font-size="11">MSTTS_V110_enUS_GuyM</text>
+      <text x="112" y="223" fill="#d2a8ff" font-family="Consolas,monospace" font-size="11">MSTTS_V110_enUS_JennyM</text>
+      <text x="112" y="241" fill="#d2a8ff" font-family="Consolas,monospace" font-size="11">MSTTS_V110_enGB_RyanM</text>
+      <text x="112" y="259" fill="#d2a8ff" font-family="Consolas,monospace" font-size="11">MSTTS_V110_enGB_SoniaM</text>
+      <text x="112" y="277" fill="#666" font-family="Consolas,monospace" font-size="11">... (more voices)</text>
+      <!-- Right pane heading -->
+      <text x="250" y="78" fill="#79c0ff" font-family="Segoe UI,sans-serif" font-size="11" font-weight="600">Name</text>
+      <text x="410" y="78" fill="#79c0ff" font-family="Segoe UI,sans-serif" font-size="11" font-weight="600">Type</text>
+      <text x="490" y="78" fill="#79c0ff" font-family="Segoe UI,sans-serif" font-size="11" font-weight="600">Data</text>
+      <line x1="240" y1="84" x2="600" y2="84" stroke="#333" stroke-width="1"/>
+      <text x="250" y="100" fill="#e0e0e0" font-family="Segoe UI,sans-serif" font-size="11">(Default)</text>
+      <text x="410" y="100" fill="#aaa" font-family="Segoe UI,sans-serif" font-size="11">REG_SZ</text>
+      <text x="490" y="100" fill="#aaa" font-family="Segoe UI,sans-serif" font-size="11">Microsoft Aria</text>
+      <!-- Arrow annotation -->
+      <text x="250" y="150" fill="#ffa657" font-family="Segoe UI,sans-serif" font-size="12" font-weight="600">&#8592; These are the hidden voices!</text>
+      <text x="250" y="170" fill="#8b949e" font-family="Segoe UI,sans-serif" font-size="11">Each subkey = one voice you can unlock.</text>
+      <text x="250" y="190" fill="#8b949e" font-family="Segoe UI,sans-serif" font-size="11">You can export them one-by-one, or grab</text>
+      <text x="250" y="210" fill="#8b949e" font-family="Segoe UI,sans-serif" font-size="11">all at once by exporting the Tokens folder.</text>
+    </svg>
+  </div>
+
+  <!-- ── STEP 3 ── -->
+  <h3 style="color:#58a6ff; margin-top:28px;">Step 3 &mdash; Export the Voice Keys</h3>
+  <p>You have two options:</p>
+  <ul>
+    <li><strong>Single voice:</strong> Right-click a specific voice key (e.g. <code>MSTTS_V110_enUS_AriaM</code>) &rarr; <strong>Export</strong></li>
+    <li><strong>All voices at once:</strong> Right-click the <code>Tokens</code> folder itself &rarr; <strong>Export</strong> (recommended &mdash; gets ~20 voices in one shot)</li>
+  </ul>
+  <p>Save the <code>.reg</code> file somewhere easy to find (e.g. your Desktop). Name it something like <code>OneCore_Voices.reg</code>.</p>
+
+  <div style="margin:14px 0 18px;">
+    <svg viewBox="0 0 520 240" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:520px;border-radius:8px;">
+      <!-- Background -->
+      <rect x="0" y="0" width="520" height="240" rx="8" fill="#1e1e1e"/>
+      <!-- Tree labels -->
+      <text x="20" y="28" fill="#888" font-family="Segoe UI,sans-serif" font-size="12">&#9660; Speech_OneCore</text>
+      <text x="36" y="48" fill="#888" font-family="Segoe UI,sans-serif" font-size="12">&#9660; Voices</text>
+      <rect x="48" y="53" width="130" height="18" rx="3" fill="#264f78"/>
+      <text x="54" y="67" fill="#e6edf3" font-family="Segoe UI,sans-serif" font-size="12" font-weight="700">&#9660; Tokens</text>
+      <!-- Context menu -->
+      <rect x="180" y="40" width="170" height="170" rx="6" fill="#2d2d2d" stroke="#555" stroke-width="1"/>
+      <text x="196" y="62" fill="#e0e0e0" font-family="Segoe UI,sans-serif" font-size="12">Expand</text>
+      <line x1="184" y1="70" x2="346" y2="70" stroke="#444" stroke-width="1"/>
+      <text x="196" y="88" fill="#e0e0e0" font-family="Segoe UI,sans-serif" font-size="12">New &#9654;</text>
+      <text x="196" y="108" fill="#e0e0e0" font-family="Segoe UI,sans-serif" font-size="12">Find...</text>
+      <line x1="184" y1="116" x2="346" y2="116" stroke="#444" stroke-width="1"/>
+      <text x="196" y="134" fill="#e0e0e0" font-family="Segoe UI,sans-serif" font-size="12">Delete</text>
+      <text x="196" y="154" fill="#e0e0e0" font-family="Segoe UI,sans-serif" font-size="12">Rename</text>
+      <line x1="184" y1="162" x2="346" y2="162" stroke="#444" stroke-width="1"/>
+      <!-- Export highlighted -->
+      <rect x="184" y="167" width="166" height="20" rx="2" fill="#264f78"/>
+      <text x="196" y="182" fill="#7ee787" font-family="Segoe UI,sans-serif" font-size="12" font-weight="700">Export</text>
+      <!-- Arrow annotation -->
+      <line x1="354" y1="177" x2="390" y2="177" stroke="#ffa657" stroke-width="2" marker-end="url(#arrowOrange)"/>
+      <defs><marker id="arrowOrange" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6Z" fill="#ffa657"/></marker></defs>
+      <text x="396" y="172" fill="#ffa657" font-family="Segoe UI,sans-serif" font-size="12" font-weight="600">Click Export</text>
+      <text x="396" y="190" fill="#8b949e" font-family="Segoe UI,sans-serif" font-size="11">Right-click on Tokens to</text>
+      <text x="396" y="205" fill="#8b949e" font-family="Segoe UI,sans-serif" font-size="11">export all voices at once.</text>
+      <!-- Save hint -->
+      <text x="20" y="228" fill="#8b949e" font-family="Segoe UI,sans-serif" font-size="11">Save as:  OneCore_Voices.reg  on your Desktop</text>
+    </svg>
+  </div>
+
+  <!-- ── STEP 4 ── -->
+  <h3 style="color:#58a6ff; margin-top:28px;">Step 4 &mdash; Edit the .reg File (Find &amp; Replace)</h3>
+  <p>This is the key step. You need to change the registry path from the OneCore location to the standard SAPI5 location.</p>
+  <ol>
+    <li>Right-click the <code>.reg</code> file you exported &rarr; <strong>Open with</strong> &rarr; <strong>Notepad</strong></li>
+    <li>Press <code>Ctrl + H</code> to open Find &amp; Replace</li>
+    <li>In <strong>Find what</strong>: type <code>Speech_OneCore</code></li>
+    <li>In <strong>Replace with</strong>: type <code>Speech</code></li>
+    <li>Click <strong>Replace All</strong></li>
+    <li><strong>Save</strong> the file (<code>Ctrl + S</code>) and close Notepad</li>
+  </ol>
+
+  <div style="margin:14px 0 18px;">
+    <svg viewBox="0 0 600 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:600px;border-radius:8px;">
+      <!-- Notepad window -->
+      <rect x="0" y="0" width="600" height="280" rx="8" fill="#1e1e1e"/>
+      <rect x="0" y="0" width="600" height="28" rx="8" fill="#3c3c3c"/>
+      <rect x="0" y="20" width="600" height="8" fill="#3c3c3c"/>
+      <text x="16" y="19" fill="#ccc" font-family="Segoe UI,sans-serif" font-size="11" font-weight="600">OneCore_Voices.reg - Notepad</text>
+      <!-- .reg file content -->
+      <text x="16" y="52" fill="#888" font-family="Consolas,monospace" font-size="11">Windows Registry Editor Version 5.00</text>
+      <text x="16" y="72" fill="#888" font-family="Consolas,monospace" font-size="11"></text>
+      <!-- Before line with highlight on Speech_OneCore -->
+      <text x="16" y="92" fill="#888" font-family="Consolas,monospace" font-size="11">[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\</text>
+      <rect x="310" y="80" width="116" height="16" rx="2" fill="#6e2b2b" opacity="0.7"/>
+      <text x="310" y="92" fill="#ff7b72" font-family="Consolas,monospace" font-size="11" font-weight="700">Speech_OneCore</text>
+      <text x="426" y="92" fill="#888" font-family="Consolas,monospace" font-size="11">\Voices\Tokens\...</text>
+      <!-- Arrow showing transformation -->
+      <text x="240" y="116" fill="#ffa657" font-family="Segoe UI,sans-serif" font-size="13" font-weight="700">&#9660; Replace All changes it to &#9660;</text>
+      <!-- After line -->
+      <text x="16" y="142" fill="#888" font-family="Consolas,monospace" font-size="11">[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\</text>
+      <rect x="310" y="130" width="54" height="16" rx="2" fill="#1a4731" opacity="0.7"/>
+      <text x="310" y="142" fill="#7ee787" font-family="Consolas,monospace" font-size="11" font-weight="700">Speech</text>
+      <text x="364" y="142" fill="#888" font-family="Consolas,monospace" font-size="11">\Voices\Tokens\...</text>
+      <!-- Find & Replace dialog overlay -->
+      <rect x="280" y="160" width="300" height="110" rx="6" fill="#2d2d2d" stroke="#555" stroke-width="1"/>
+      <text x="296" y="182" fill="#ccc" font-family="Segoe UI,sans-serif" font-size="11" font-weight="600">Replace</text>
+      <!-- Find field -->
+      <text x="296" y="202" fill="#aaa" font-family="Segoe UI,sans-serif" font-size="10">Find what:</text>
+      <rect x="370" y="190" width="140" height="18" rx="3" fill="#1e1e1e" stroke="#555" stroke-width="1"/>
+      <text x="376" y="203" fill="#ff7b72" font-family="Consolas,monospace" font-size="10">Speech_OneCore</text>
+      <!-- Replace field -->
+      <text x="296" y="226" fill="#aaa" font-family="Segoe UI,sans-serif" font-size="10">Replace with:</text>
+      <rect x="370" y="214" width="140" height="18" rx="3" fill="#1e1e1e" stroke="#555" stroke-width="1"/>
+      <text x="376" y="227" fill="#7ee787" font-family="Consolas,monospace" font-size="10">Speech</text>
+      <!-- Replace All button -->
+      <rect x="516" y="214" width="54" height="18" rx="3" fill="#2a6ebb"/>
+      <text x="521" y="227" fill="#fff" font-family="Segoe UI,sans-serif" font-size="9" font-weight="600">Replace All</text>
+      <!-- Annotation -->
+      <text x="296" y="260" fill="#8b949e" font-family="Segoe UI,sans-serif" font-size="10">Ctrl + H  &rarr;  Replace All  &rarr;  Save  &rarr;  Close</text>
+    </svg>
+  </div>
+
+  <div class="note">
+    <strong>What this does:</strong> Every registry path in the file changes from
+    <code>...\Speech_OneCore\Voices\Tokens\...</code> to
+    <code>...\Speech\Voices\Tokens\...</code> &mdash; which is the standard SAPI5 location
+    that apps like DCS Auto-GCI read from.
+  </div>
+
+  <!-- ── STEP 5 ── -->
+  <h3 style="color:#58a6ff; margin-top:28px;">Step 5 &mdash; Import the Modified .reg File</h3>
+  <p>Double-click the edited <code>.reg</code> file. Windows will ask for confirmation:</p>
+  <ol>
+    <li>Click <strong>Yes</strong> on the "Are you sure you want to continue?" prompt</li>
+    <li>You should see: <em>"The keys and values contained in [file] have been successfully added to the registry"</em></li>
+  </ol>
+
+  <div style="margin:14px 0 18px;">
+    <svg viewBox="0 0 480 130" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:480px;border-radius:8px;">
+      <!-- Dialog -->
+      <rect x="0" y="0" width="480" height="130" rx="8" fill="#2d2d2d" stroke="#555" stroke-width="1"/>
+      <rect x="0" y="0" width="480" height="28" rx="8" fill="#3c3c3c"/>
+      <rect x="0" y="20" width="480" height="8" fill="#3c3c3c"/>
+      <text x="16" y="19" fill="#ccc" font-family="Segoe UI,sans-serif" font-size="11" font-weight="600">Registry Editor</text>
+      <!-- Warning icon -->
+      <text x="24" y="66" fill="#d29922" font-family="Segoe UI Symbol,sans-serif" font-size="28">&#9888;</text>
+      <!-- Message -->
+      <text x="62" y="58" fill="#e0e0e0" font-family="Segoe UI,sans-serif" font-size="12">Adding information can unintentionally change or delete values</text>
+      <text x="62" y="76" fill="#e0e0e0" font-family="Segoe UI,sans-serif" font-size="12">and cause components to stop working correctly.</text>
+      <text x="62" y="94" fill="#e0e0e0" font-family="Segoe UI,sans-serif" font-size="12">Are you sure you want to continue?</text>
+      <!-- Yes button highlighted -->
+      <rect x="290" y="104" width="70" height="22" rx="4" fill="#2a6ebb"/>
+      <text x="314" y="119" fill="#fff" font-family="Segoe UI,sans-serif" font-size="11" font-weight="600">Yes</text>
+      <!-- No button -->
+      <rect x="370" y="104" width="70" height="22" rx="4" fill="#444"/>
+      <text x="397" y="119" fill="#ccc" font-family="Segoe UI,sans-serif" font-size="11">No</text>
+    </svg>
+  </div>
+
+  <!-- ── STEP 6 ── -->
+  <h3 style="color:#58a6ff; margin-top:28px;">Step 6 &mdash; Verify &amp; Restart DCS Auto-GCI</h3>
+  <p>You can verify the import worked by checking in regedit:</p>
+  <pre><code>HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech\Voices\Tokens</code></pre>
+  <p>You should now see the OneCore voice keys (e.g. <code>MSTTS_V110_enUS_AriaM</code>) alongside the
+     original voices (<code>TTS_MS_EN-US_DAVID_11.0</code>, <code>TTS_MS_EN-US_ZIRA_11.0</code>).</p>
+
+  <div style="margin:14px 0 18px;">
+    <svg viewBox="0 0 600 220" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:600px;border-radius:8px;">
+      <!-- Window -->
+      <rect x="0" y="0" width="600" height="220" rx="8" fill="#1e1e1e"/>
+      <rect x="0" y="0" width="600" height="28" rx="8" fill="#3c3c3c"/>
+      <rect x="0" y="20" width="600" height="8" fill="#3c3c3c"/>
+      <text x="16" y="19" fill="#ccc" font-family="Segoe UI,sans-serif" font-size="11" font-weight="600">Registry Editor &mdash; verification</text>
+      <!-- Address bar -->
+      <rect x="8" y="34" width="584" height="22" rx="3" fill="#2d2d2d" stroke="#444" stroke-width="1"/>
+      <text x="16" y="50" fill="#79c0ff" font-family="Consolas,monospace" font-size="10">Computer\HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech\Voices\Tokens</text>
+      <!-- Tree -->
+      <text x="14" y="78" fill="#e6edf3" font-family="Segoe UI,sans-serif" font-size="12" font-weight="700">&#9660; Tokens</text>
+      <!-- Original voices -->
+      <text x="32" y="98" fill="#888" font-family="Consolas,monospace" font-size="11">TTS_MS_EN-US_DAVID_11.0</text>
+      <text x="310" y="98" fill="#484f58" font-family="Segoe UI,sans-serif" font-size="10">(original)</text>
+      <text x="32" y="116" fill="#888" font-family="Consolas,monospace" font-size="11">TTS_MS_EN-US_ZIRA_11.0</text>
+      <text x="310" y="116" fill="#484f58" font-family="Segoe UI,sans-serif" font-size="10">(original)</text>
+      <!-- Divider -->
+      <line x1="20" y1="124" x2="400" y2="124" stroke="#30363d" stroke-width="1" stroke-dasharray="4,3"/>
+      <!-- New OneCore voices -->
+      <text x="32" y="142" fill="#7ee787" font-family="Consolas,monospace" font-size="11" font-weight="600">MSTTS_V110_enUS_AriaM</text>
+      <text x="310" y="142" fill="#1a4731" font-family="Segoe UI,sans-serif" font-size="10" font-weight="600"><tspan fill="#7ee787">&#10003; NEW</tspan></text>
+      <text x="32" y="160" fill="#7ee787" font-family="Consolas,monospace" font-size="11" font-weight="600">MSTTS_V110_enUS_GuyM</text>
+      <text x="310" y="160" fill="#1a4731" font-family="Segoe UI,sans-serif" font-size="10" font-weight="600"><tspan fill="#7ee787">&#10003; NEW</tspan></text>
+      <text x="32" y="178" fill="#7ee787" font-family="Consolas,monospace" font-size="11" font-weight="600">MSTTS_V110_enUS_JennyM</text>
+      <text x="310" y="178" fill="#1a4731" font-family="Segoe UI,sans-serif" font-size="10" font-weight="600"><tspan fill="#7ee787">&#10003; NEW</tspan></text>
+      <text x="32" y="196" fill="#7ee787" font-family="Consolas,monospace" font-size="11" font-weight="600">MSTTS_V110_enGB_RyanM</text>
+      <text x="310" y="196" fill="#1a4731" font-family="Segoe UI,sans-serif" font-size="10" font-weight="600"><tspan fill="#7ee787">&#10003; NEW</tspan></text>
+      <text x="32" y="214" fill="#666" font-family="Consolas,monospace" font-size="11">... and many more</text>
+    </svg>
+  </div>
+
+  <p>Now <strong>close and reopen DCS Auto-GCI</strong>. Open <strong>Settings</strong> &mdash; the unlocked
+     voices (Aria, Guy, Jenny, Ryan, etc.) will appear in the <strong>Voice</strong> dropdown.</p>
+
+  <!-- ── UNDO ── -->
+  <h3 style="color:#d2a8ff; margin-top:28px;">How to Undo</h3>
+  <p>If you want to remove the unlocked voices later:</p>
+  <ol>
+    <li>Open <code>regedit</code></li>
+    <li>Navigate to <code>HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech\Voices\Tokens</code></li>
+    <li>Delete any keys that start with <code>MSTTS_V110</code> (these are the ones you added)</li>
+    <li>The original <code>TTS_MS_EN-US_DAVID</code> and <code>TTS_MS_EN-US_ZIRA</code> keys are untouched</li>
+  </ol>
+
+  <div class="note">
+    <strong>Tip:</strong> The "bulk export" method (right-clicking the entire <code>Tokens</code> folder in
+    Step 3) is the fastest approach. One export, one find-and-replace, one import &mdash; and you unlock
+    all ~20 OneCore voices at once.
+  </div>
+
+  </div><!-- end details content -->
+  </details>
+</section>
+
+<!-- TROUBLESHOOTING -->
+<section id="troubleshooting">
+  <h2>Troubleshooting</h2>
+  <table>
+    <tr><th>Problem</th><th>Solution</th></tr>
+    <tr><td>App says "WAITING FOR DCS"</td><td>Make sure the Lua scripts are in the correct Saved Games folder and you're in a mission</td></tr>
+    <tr><td>No threats appear</td><td><code>LoGetWorldObjects()</code> may be blocked. Install the Hook script for event-based detection</td></tr>
+    <tr><td>TTS not working</td><td>Verify a voice is selected in the settings panel. Try the <strong>Test TTS</strong> button</td></tr>
+    <tr><td>No voices in dropdown</td><td>Check <strong>Settings &rarr; Time &amp; Language &rarr; Speech</strong> and install voices</td></tr>
+    <tr><td>Port conflict</td><td>Change the UDP port in both the app settings and the Lua script</td></tr>
+    <tr><td>Existing Export.lua breaks</td><td>Make sure you <em>appended</em> the Auto-GCI code, not replaced the file</td></tr>
+    <tr><td>Setup.exe won't uninstall</td><td>Use <strong>Settings &rarr; Apps &rarr; DCS Auto-GCI &rarr; Uninstall</strong></td></tr>
+  </table>
+</section>
+
+<!-- BUILDING -->
+<section id="building">
+  <h2>Building from Source</h2>
+  <p>To rebuild the EXE and installer yourself:</p>
+  <ol>
+    <li>Install prerequisites:
+      <ul>
+        <li>Python 3.8+ with <code>pip install pyinstaller comtypes</code></li>
+        <li>.NET SDK 8+ (<code>dotnet --version</code>)</li>
+        <li>WiX toolset: <code>dotnet tool install --global wix</code></li>
+        <li>WiX extensions: <code>wix extension add WixToolset.UI.wixext</code> and <code>wix extension add WixToolset.Bal.wixext</code></li>
+      </ul>
+    </li>
+    <li>Run <code>build_exe.bat</code> &mdash; builds the EXE and Setup.exe, packages docs and Lua scripts into a clean <code>release\</code> folder</li>
+  </ol>
+</section>
+
+<!-- FILE STRUCTURE -->
+<section id="files">
+  <h2>File Structure</h2>
+  <pre><code>DCS-ThreatWarner/
+&#9500;&#9472;&#9472; auto_gci.py                   # Main Python GUI application
+&#9500;&#9472;&#9472; build_exe.bat                 # Build script (EXE &rarr; MSI &rarr; Setup.exe)
+&#9500;&#9472;&#9472; Package.wxs                   # WiX MSI installer source
+&#9500;&#9472;&#9472; Bundle.wxs                    # WiX Setup.exe bootstrapper source
+&#9500;&#9472;&#9472; README.md                     # Documentation (Markdown)
+&#9500;&#9472;&#9472; DCS_AutoGCI_README.html       # This help file
+&#9500;&#9472;&#9472; requirements.txt              # Python dependencies (comtypes)
+&#9500;&#9472;&#9472; test_sender.py                # Test script (scripted combat scenario)
+&#9500;&#9472;&#9472; dcs_lua/
+&#9474;   &#9500;&#9472;&#9472; ThreatWarnerExport.lua    # DCS Export script (REQUIRED)
+&#9474;   &#9492;&#9472;&#9472; ThreatWarnerHook.lua      # DCS Hook script (OPTIONAL)
+&#9492;&#9472;&#9472; release/                      # Clean distributable folder
+    &#9500;&#9472;&#9472; DCS Auto-GCI.exe          # Standalone portable executable
+    &#9500;&#9472;&#9472; DCS_AutoGCI_Setup.exe     # Installer (Install / Uninstall)
+    &#9500;&#9472;&#9472; DCS_AutoGCI_README.html   # Help file (included with release)
+    &#9492;&#9472;&#9472; dcs_lua/                  # Lua scripts (for manual install)
+        &#9500;&#9472;&#9472; ThreatWarnerExport.lua
+        &#9492;&#9472;&#9472; ThreatWarnerHook.lua</code></pre>
+</section>
+
+<div class="footer">
+  DCS Auto-GCI &mdash; Free to use and modify. Not affiliated with Eagle Dynamics.
+</div>
+
+</main>
+
+<script>
+// Highlight active sidebar link on scroll
+(function() {
+  var links = document.querySelectorAll('#sidebar a');
+  var sections = [];
+  links.forEach(function(link) {
+    var id = link.getAttribute('href').slice(1);
+    var el = document.getElementById(id);
+    if (el) sections.push({ id: id, el: el, link: link });
+  });
+
+  function update() {
+    var scrollY = window.scrollY || document.documentElement.scrollTop;
+    var current = '';
+    for (var i = 0; i < sections.length; i++) {
+      if (sections[i].el.offsetTop - 80 <= scrollY) {
+        current = sections[i].id;
+      }
+    }
+    links.forEach(function(link) {
+      link.classList.toggle('active', link.getAttribute('href') === '#' + current);
+    });
+  }
+
+  window.addEventListener('scroll', update);
+  update();
+})();
+</script>
+</body>
+</html>

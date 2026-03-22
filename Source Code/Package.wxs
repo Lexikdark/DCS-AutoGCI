@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+
+  <Package Name="DCS Auto-GCI"
+           Manufacturer="DCS Auto-GCI"
+           Version="1.0.0.0"
+           UpgradeCode="F3A7B2C1-DC50-4852-8057-000000000001"
+           Scope="perUser"
+           InstallerVersion="500">
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of DCS Auto-GCI is already installed." />
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+
+    <!-- Application icon in Add/Remove Programs -->
+    <Icon Id="AppIcon" SourceFile="app_icon.ico" />
+    <Property Id="ARPPRODUCTICON" Value="AppIcon" />
+
+    <!-- Use the minimal WiX UI (install dir + progress) -->
+    <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
+
+    <!-- Show install locations on the completion dialog (set via CustomAction so property refs resolve) -->
+    <CustomAction Id="SetExitDialogText" Property="WIXUI_EXITDIALOGOPTIONALTEXT"
+                  Value="Install locations:&#13;&#10;&#13;&#10;Application:&#13;&#10;[INSTALLFOLDER]&#13;&#10;&#13;&#10;DCS Scripts:&#13;&#10;[DCSScriptsDir]&#13;&#10;[DCSHooksDir]&#13;&#10;&#13;&#10;DCS Open Beta Scripts:&#13;&#10;[DCSBetaScriptsDir]&#13;&#10;[DCSBetaHooksDir]"
+                  Execute="immediate" />
+
+    <!-- Show install location in Add / Remove Programs -->
+    <CustomAction Id="SetARPInstallLocation" Property="ARPINSTALLLOCATION"
+                  Value="[INSTALLFOLDER]" Execute="immediate" />
+
+    <!-- ================================================================ -->
+    <!--  Directory structure                                             -->
+    <!-- ================================================================ -->
+    <StandardDirectory Id="LocalAppDataFolder">
+      <Directory Id="INSTALLFOLDER" Name="DCS Auto-GCI">
+        <Directory Id="AppLuaDir" Name="dcs_lua" />
+      </Directory>
+    </StandardDirectory>
+
+    <!-- DCS Saved Games directories — resolved via CustomAction at install time -->
+
+    <CustomAction Id="SetDCSScriptsDir" Property="DCSScriptsDir"
+                  Value="[%USERPROFILE]\Saved Games\DCS\Scripts" Execute="immediate" />
+    <CustomAction Id="SetDCSHooksDir" Property="DCSHooksDir"
+                  Value="[%USERPROFILE]\Saved Games\DCS\Scripts\Hooks" Execute="immediate" />
+    <CustomAction Id="SetDCSBetaScriptsDir" Property="DCSBetaScriptsDir"
+                  Value="[%USERPROFILE]\Saved Games\DCS.openbeta\Scripts" Execute="immediate" />
+    <CustomAction Id="SetDCSBetaHooksDir" Property="DCSBetaHooksDir"
+                  Value="[%USERPROFILE]\Saved Games\DCS.openbeta\Scripts\Hooks" Execute="immediate" />
+
+    <!-- Export.lua: add dofile line on install, remove on uninstall -->
+    <CustomAction Id="CA_AddExportLine"
+                  Directory="INSTALLFOLDER"
+                  ExeCommand='powershell.exe -NoProfile -ExecutionPolicy Bypass -File setup_export.ps1 install'
+                  Execute="deferred"
+                  Impersonate="yes"
+                  Return="ignore" />
+    <CustomAction Id="CA_RemoveExportLine"
+                  Directory="INSTALLFOLDER"
+                  ExeCommand='powershell.exe -NoProfile -ExecutionPolicy Bypass -File setup_export.ps1 uninstall'
+                  Execute="deferred"
+                  Impersonate="yes"
+                  Return="ignore" />
+
+    <InstallExecuteSequence>
+      <Custom Action="SetDCSScriptsDir" Before="CostFinalize" />
+      <Custom Action="SetDCSHooksDir" Before="CostFinalize" />
+      <Custom Action="SetDCSBetaScriptsDir" Before="CostFinalize" />
+      <Custom Action="SetDCSBetaHooksDir" Before="CostFinalize" />
+      <Custom Action="SetARPInstallLocation" After="CostFinalize" />
+      <Custom Action="CA_AddExportLine" After="InstallFiles" Condition='NOT REMOVE="ALL"' />
+      <Custom Action="CA_RemoveExportLine" Before="RemoveFiles" Condition='REMOVE="ALL"' />
+    </InstallExecuteSequence>
+    <InstallUISequence>
+      <Custom Action="SetDCSScriptsDir" Before="CostFinalize" />
+      <Custom Action="SetDCSHooksDir" Before="CostFinalize" />
+      <Custom Action="SetDCSBetaScriptsDir" Before="CostFinalize" />
+      <Custom Action="SetDCSBetaHooksDir" Before="CostFinalize" />
+      <Custom Action="SetExitDialogText" After="CostFinalize" />
+    </InstallUISequence>
+
+    <StandardDirectory Id="TARGETDIR">
+      <Directory Id="DCSScriptsDir" />
+      <Directory Id="DCSHooksDir" />
+      <Directory Id="DCSBetaScriptsDir" />
+      <Directory Id="DCSBetaHooksDir" />
+    </StandardDirectory>
+
+    <!-- Desktop shortcut directory -->
+    <StandardDirectory Id="DesktopFolder" />
+
+    <!-- Start Menu directory -->
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="StartMenuDir" Name="DCS Auto-GCI" />
+    </StandardDirectory>
+
+    <!-- ================================================================ -->
+    <!--  Components                                                      -->
+    <!-- ================================================================ -->
+
+    <!-- Main EXE -->
+    <ComponentGroup Id="AppComponents" Directory="INSTALLFOLDER">
+      <Component Id="MainExe" Guid="A1B2C3D4-0001-4000-8000-000000000001">
+        <File Id="AutoGCIExe" Source="..\release\DCS Auto-GCI.exe" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <!-- Lua backup copies in app dir -->
+    <ComponentGroup Id="AppLuaComponents" Directory="AppLuaDir">
+      <Component Id="AppExportLua" Guid="A1B2C3D4-0002-4000-8000-000000000001">
+        <File Id="AppExportLuaFile" Source="dcs_lua\ThreatWarnerExport.lua" KeyPath="yes" />
+      </Component>
+      <Component Id="AppHookLua" Guid="A1B2C3D4-0003-4000-8000-000000000001">
+        <File Id="AppHookLuaFile" Source="dcs_lua\ThreatWarnerHook.lua" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <!-- DCS Stable: Export script -->
+    <ComponentGroup Id="DCSStableExport" Directory="DCSScriptsDir">
+      <Component Id="DCSExportLua" Guid="A1B2C3D4-0004-4000-8000-000000000001">
+        <File Id="DCSExportLuaFile" Source="dcs_lua\ThreatWarnerExport.lua" KeyPath="yes" />
+        <CreateFolder />
+      </Component>
+    </ComponentGroup>
+
+    <!-- DCS Stable: Hook script -->
+    <ComponentGroup Id="DCSStableHook" Directory="DCSHooksDir">
+      <Component Id="DCSHookLua" Guid="A1B2C3D4-0005-4000-8000-000000000001">
+        <File Id="DCSHookLuaFile" Source="dcs_lua\ThreatWarnerHook.lua" KeyPath="yes" />
+        <CreateFolder />
+      </Component>
+    </ComponentGroup>
+
+    <!-- DCS OpenBeta: Export script -->
+    <ComponentGroup Id="DCSBetaExport" Directory="DCSBetaScriptsDir">
+      <Component Id="DCSBetaExportLua" Guid="A1B2C3D4-0006-4000-8000-000000000001">
+        <File Id="DCSBetaExportLuaFile" Source="dcs_lua\ThreatWarnerExport.lua" KeyPath="yes" />
+        <CreateFolder />
+      </Component>
+    </ComponentGroup>
+
+    <!-- DCS OpenBeta: Hook script -->
+    <ComponentGroup Id="DCSBetaHook" Directory="DCSBetaHooksDir">
+      <Component Id="DCSBetaHookLua" Guid="A1B2C3D4-0007-4000-8000-000000000001">
+        <File Id="DCSBetaHookLuaFile" Source="dcs_lua\ThreatWarnerHook.lua" KeyPath="yes" />
+        <CreateFolder />
+      </Component>
+    </ComponentGroup>
+
+    <!-- Desktop Shortcut -->
+    <ComponentGroup Id="ShortcutComponents" Directory="DesktopFolder">
+      <Component Id="DesktopShortcut" Guid="A1B2C3D4-0008-4000-8000-000000000001">
+        <Shortcut Id="DesktopShortcutLink"
+                  Name="DCS Auto-GCI"
+                  Target="[INSTALLFOLDER]DCS Auto-GCI.exe"
+                  WorkingDirectory="INSTALLFOLDER" />
+        <RegistryValue Root="HKCU" Key="Software\DCS Auto-GCI" Name="DesktopShortcut" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <!-- Start Menu Shortcut -->
+    <ComponentGroup Id="StartMenuComponents" Directory="StartMenuDir">
+      <Component Id="StartMenuShortcut" Guid="A1B2C3D4-0009-4000-8000-000000000001">
+        <Shortcut Id="StartMenuShortcutLink"
+                  Name="DCS Auto-GCI"
+                  Target="[INSTALLFOLDER]DCS Auto-GCI.exe"
+                  WorkingDirectory="INSTALLFOLDER" />
+        <RemoveFolder Id="CleanStartMenu" On="uninstall" />
+        <RegistryValue Root="HKCU" Key="Software\DCS Auto-GCI" Name="StartMenuShortcut" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <!-- Export.lua setup helper script -->
+    <ComponentGroup Id="ExportSetupComponents" Directory="INSTALLFOLDER">
+      <Component Id="ExportSetupScript" Guid="A1B2C3D4-000B-4000-8000-000000000001">
+        <File Id="SetupExportPs1" Source="setup_export.ps1" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <!-- Settings cleanup on uninstall -->
+    <ComponentGroup Id="CleanupComponents" Directory="INSTALLFOLDER">
+      <Component Id="SettingsCleanup" Guid="A1B2C3D4-000A-4000-8000-000000000001">
+        <RegistryValue Root="HKCU" Key="Software\DCS Auto-GCI" Name="Installed" Type="integer" Value="1" KeyPath="yes" />
+        <RemoveFile Id="RemoveSettings" Name="autogci_settings.json" On="uninstall" />
+      </Component>
+    </ComponentGroup>
+
+    <!-- ================================================================ -->
+    <!--  Feature                                                         -->
+    <!-- ================================================================ -->
+    <Feature Id="Complete" Title="DCS Auto-GCI" Level="1">
+      <ComponentGroupRef Id="AppComponents" />
+      <ComponentGroupRef Id="AppLuaComponents" />
+      <ComponentGroupRef Id="DCSStableExport" />
+      <ComponentGroupRef Id="DCSStableHook" />
+      <ComponentGroupRef Id="DCSBetaExport" />
+      <ComponentGroupRef Id="DCSBetaHook" />
+      <ComponentGroupRef Id="ShortcutComponents" />
+      <ComponentGroupRef Id="StartMenuComponents" />
+      <ComponentGroupRef Id="ExportSetupComponents" />
+      <ComponentGroupRef Id="CleanupComponents" />
+    </Feature>
+
+  </Package>
+</Wix>

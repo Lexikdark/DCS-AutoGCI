@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:bal="http://wixtoolset.org/schemas/v4/wxs/bal">
+
+  <Bundle Name="DCS Auto-GCI"
+          Manufacturer="DCS Auto-GCI"
+          Version="1.0.0.0"
+          UpgradeCode="F3A7B2C1-DC50-4852-8057-000000000002"
+          IconSourceFile="setup_icon.ico">
+
+    <BootstrapperApplication>
+      <bal:WixStandardBootstrapperApplication
+          LicenseUrl=""
+          Theme="hyperlinkLicense"
+          SuppressOptionsUI="yes" />
+    </BootstrapperApplication>
+
+    <Chain>
+      <MsiPackage SourceFile="..\release\DCS_AutoGCI_Setup.msi" />
+    </Chain>
+
+  </Bundle>
+</Wix>
