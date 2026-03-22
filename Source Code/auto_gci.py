@@ -1616,7 +1616,10 @@ class ThreatWarnerApp:
 
     def _test_tts(self):
         self._apply_tts_config()
-        self.tts.speak("Bandit, 3 o'clock, 25 miles, Angels 20")
+        # Bypass the self.enabled check so the test button always works
+        # even when TTS is toggled off in the settings panel.
+        if self.tts._running:
+            self.tts._queue.put(("speak", "Bandit, 3 o'clock, 25 miles, Angels 20"))
 
     def _unlock_onecore_voices(self):
         """Copy OneCore voice registry keys to standard SAPI5 location."""
