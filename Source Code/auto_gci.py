@@ -11,6 +11,7 @@ import time
 import json
 import re
 import os
+import tempfile
 import tkinter as tk
 from tkinter import ttk
 from dataclasses import dataclass, field
@@ -38,6 +39,7 @@ NM_PER_METER = 0.000539957
 SETTINGS_DIR = os.path.dirname(os.path.abspath(
     sys.executable if getattr(sys, 'frozen', False) else sys.argv[0]))
 SETTINGS_FILE = os.path.join(SETTINGS_DIR, "autogci_settings.json")
+SP_MODE_FLAG = os.path.join(tempfile.gettempdir(), "autogci_sp_mode.txt")
 
 DEFAULT_SETTINGS = {
     "missile_range_nm": 80,
@@ -61,6 +63,8 @@ DEFAULT_SETTINGS = {
     "radio_static_vol": 40,
     "radio_crackle_vol": 30,
     "theme": "Stealth Dark",
+    "detection_singleplayer": True,
+    "detection_multiplayer": False,
 }
 
 
@@ -1041,6 +1045,7 @@ class ThreatWarnerApp:
         self.root.rowconfigure(0, weight=1)
 
         self._build_gui()
+        self._write_sp_mode_flag()
 
         # Start UDP
         self.receiver = UDPReceiver(UDP_HOST, UDP_PORT, self._on_message)
@@ -1144,6 +1149,24 @@ class ThreatWarnerApp:
         btn_bar.grid(row=0, column=0, sticky='ew', pady=(6, 4), padx=8)
         tk.Label(btn_bar, text="ACTIVE THREATS", bg=BG, fg=RED,
                  font=(FONT_UI, 12, 'bold')).pack(side=tk.LEFT)
+
+        # Detection mode toggle buttons
+        self.sp_mode_var = tk.BooleanVar(value=self.settings.get("detection_singleplayer", True))
+        self.sp_btn = tk.Button(btn_bar, text="\u2699 Single-Player",
+                                command=lambda: self._toggle_mode(self.sp_mode_var, self.sp_btn),
+                                font=(FONT_UI, 9), relief=tk.FLAT, cursor='hand2',
+                                padx=8, pady=2, activebackground='#30363d')
+        self.sp_btn.pack(side=tk.LEFT, padx=(20, 4))
+        self._update_mode_btn(self.sp_btn, self.sp_mode_var.get())
+
+        self.mp_mode_var = tk.BooleanVar(value=self.settings.get("detection_multiplayer", False))
+        self.mp_btn = tk.Button(btn_bar, text="\U0001F4E1 Multiplayer (AWACS)",
+                                command=lambda: self._toggle_mode(self.mp_mode_var, self.mp_btn),
+                                font=(FONT_UI, 9), relief=tk.FLAT, cursor='hand2',
+                                padx=8, pady=2, activebackground='#30363d')
+        self.mp_btn.pack(side=tk.LEFT, padx=4)
+        self._update_mode_btn(self.mp_btn, self.mp_mode_var.get())
+
         tk.Button(btn_bar, text="Clear Log", command=self._clear_log,
                   bg=BG3, fg=SUBTLE, font=(FONT_UI, 9), relief=tk.FLAT,
                   activebackground='#30363d', cursor='hand2',
@@ -1445,6 +1468,11 @@ class ThreatWarnerApp:
         self.tts_voice_var.set(voice_display)
         device_display = self._id_to_display(s.get("tts_device", ""), self._devices)
         self.tts_device_var.set(device_display)
+        self.sp_mode_var.set(s.get("detection_singleplayer", True))
+        self._update_mode_btn(self.sp_btn, self.sp_mode_var.get())
+        self.mp_mode_var.set(s.get("detection_multiplayer", False))
+        self._update_mode_btn(self.mp_btn, self.mp_mode_var.get())
+        self._write_sp_mode_flag()
         # Switch to Settings tab so user sees the result
         self.notebook.select(1)
 
@@ -1471,6 +1499,8 @@ class ThreatWarnerApp:
             "radio_static_vol": self.radio_static_vol_var.get(),
             "radio_crackle_vol": self.radio_crackle_vol_var.get(),
             "theme": self.theme_var.get(),
+            "detection_singleplayer": self.sp_mode_var.get(),
+            "detection_multiplayer": self.mp_mode_var.get(),
         }
 
     def _save_settings(self):
@@ -1509,6 +1539,10 @@ class ThreatWarnerApp:
             self.tts_voice_var.set(self._voice_names[0])
         if self._device_names:
             self.tts_device_var.set(self._device_names[0])
+        self.sp_mode_var.set(True)
+        self._update_mode_btn(self.sp_btn, True)
+        self.mp_mode_var.set(False)
+        self._update_mode_btn(self.mp_btn, False)
         self._queue_log("Settings reset to defaults.", 'info')
 
     # ── Update Check ──────────────────────────────────────────────────
@@ -1673,6 +1707,26 @@ class ThreatWarnerApp:
     def _queue_log(self, message, tag='info'):
         self.log_queue.put((message, tag))
 
+    def _toggle_mode(self, var, btn):
+        var.set(not var.get())
+        self._update_mode_btn(btn, var.get())
+        self._write_sp_mode_flag()
+
+    def _write_sp_mode_flag(self):
+        """Write '1' or '0' to the temp flag file so Export.lua knows
+        whether to call LoGetWorldObjects()."""
+        try:
+            with open(SP_MODE_FLAG, 'w') as f:
+                f.write("1" if self.sp_mode_var.get() else "0")
+        except OSError:
+            pass
+
+    def _update_mode_btn(self, btn, active):
+        if active:
+            btn.configure(bg='#238636', fg='white', activeforeground='white')
+        else:
+            btn.configure(bg=BG3, fg=SUBTLE, activeforeground=SUBTLE)
+
     # ── Periodic GUI Update ───────────────────────────────────────────
 
     def _tick(self):
@@ -1761,7 +1815,18 @@ class ThreatWarnerApp:
                     self.connected = True
 
             elif msg.startswith("THREAT:"):
-                self._parse_threat(msg[7:])
+                payload = msg[7:]
+                parts = payload.split("|")
+                uid = parts[1] if len(parts) > 1 else ""
+                # TWS/locked fallbacks always processed regardless of mode
+                if uid.startswith("tws_") or uid.startswith("locked_"):
+                    self._parse_threat(payload)
+                elif self.settings.get("detection_singleplayer", True):
+                    self._parse_threat(payload)
+
+            elif msg.startswith("AWACS:"):
+                if self.settings.get("detection_multiplayer", False):
+                    self._parse_threat(msg[6:])
 
             elif msg.startswith("EVENT:"):
                 self._parse_event(msg[6:])

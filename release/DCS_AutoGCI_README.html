@@ -223,6 +223,7 @@
   <a href="#detection">Detection Methods</a>
   <a href="#luaconfig">Lua Configuration</a>
   <a href="#hooksetup">Hook Script Setup</a>
+  <a href="#spmpmodes">SP / MP Modes</a>
   <a href="#testing">Testing Without DCS</a>
   <a href="#ttsvoices">Adding TTS Voices</a>
   <a href="#troubleshooting">Troubleshooting</a>
@@ -303,7 +304,7 @@ python auto_gci.py</code></pre>
 To:    %USERPROFILE%\Saved Games\DCS\Scripts\ThreatWarnerExport.lua
        %USERPROFILE%\Saved Games\DCS.openbeta\Scripts\ThreatWarnerExport.lua</code></pre>
 
-  <p><strong>Hook script (optional):</strong></p>
+  <p><strong>Hook script (optional &mdash; adds mission events + AWACS detection):</strong></p>
   <pre><code>Copy:  dcs_lua\ThreatWarnerHook.lua
 To:    %USERPROFILE%\Saved Games\DCS\Scripts\Hooks\ThreatWarnerHook.lua
        %USERPROFILE%\Saved Games\DCS.openbeta\Scripts\Hooks\ThreatWarnerHook.lua</code></pre>
@@ -327,6 +328,9 @@ do
     local TW_MAX_WPN_M   = 300000
 
     local tw_udp, tw_started = nil, false
+    local tw_sp_mode = true
+    local tw_modeCheckNext = 0
+    local tw_MODE_FILE = os.getenv("TEMP") .. "\\autogci_sp_mode.txt"
 
     local function tw_initSocket()
         package.path  = package.path  .. ";.\\LuaSocket\\?.lua"
@@ -358,6 +362,16 @@ do
     local tw_prevBefore    = LuaExportBeforeNextFrame
     local tw_prevAfter     = LuaExportAfterNextFrame
 
+    local function tw_readModeFlag(t)
+        if t &lt; tw_modeCheckNext then return end
+        tw_modeCheckNext = t + 2.0
+        local f = io.open(tw_MODE_FILE, "r")
+        if f then
+            local v = f:read("*l"); f:close()
+            tw_sp_mode = (v ~= "0")
+        else tw_sp_mode = true end
+    end
+
     LuaExportStart = function()
         local s = tw_initSocket()
         if s then
@@ -382,6 +396,7 @@ do
             if tw_prevNextEvent then return tw_prevNextEvent(t) end
             return t + 1.0
         end
+        tw_readModeFlag(t)
         local selfOk, selfData = pcall(LoGetSelfData)
         if selfOk and selfData then
             tw_send(string.format("SELF:%s|%.6f|%.6f|%.1f|%.4f",
@@ -390,25 +405,27 @@ do
                 selfData.LatLongAlt.Alt, selfData.Heading))
             local myCoal, myLat, myLon = selfData.Coalition,
                 selfData.LatLongAlt.Lat, selfData.LatLongAlt.Long
-            local wOk, objects = pcall(LoGetWorldObjects)
-            if wOk and objects then
-                for id, obj in pairs(objects) do
-                    if tw_isEnemy(myCoal, obj.Coalition) and obj.Type and obj.LatLongAlt then
-                        local lvl1, cat, maxR = obj.Type.level1, nil, TW_MAX_RANGE_M
-                        if lvl1 == 4 and obj.Type.level2 ~= 1 then
-                            cat, maxR = "WEAPON", TW_MAX_WPN_M
-                        elseif lvl1 == 1 then cat = "AIR"
-                        elseif lvl1 == 2 then cat = "GROUND" end
-                        if cat then
-                            local d = tw_approxDistM(myLat, myLon,
-                                obj.LatLongAlt.Lat, obj.LatLongAlt.Long)
-                            if d &lt; maxR then
-                                tw_send(string.format(
-                                    "THREAT:%s|%s|%s|%.6f|%.6f|%.1f|%.4f|%d",
-                                    cat, tostring(id), obj.Name or "Unknown",
-                                    obj.LatLongAlt.Lat, obj.LatLongAlt.Long,
-                                    obj.LatLongAlt.Alt, obj.Heading or 0,
-                                    type(obj.Coalition)=="number" and obj.Coalition or 0))
+            if tw_sp_mode then
+                local wOk, objects = pcall(LoGetWorldObjects)
+                if wOk and objects then
+                    for id, obj in pairs(objects) do
+                        if tw_isEnemy(myCoal, obj.Coalition) and obj.Type and obj.LatLongAlt then
+                            local lvl1, cat, maxR = obj.Type.level1, nil, TW_MAX_RANGE_M
+                            if lvl1 == 4 and obj.Type.level2 ~= 1 then
+                                cat, maxR = "WEAPON", TW_MAX_WPN_M
+                            elseif lvl1 == 1 then cat = "AIR"
+                            elseif lvl1 == 2 then cat = "GROUND" end
+                            if cat then
+                                local d = tw_approxDistM(myLat, myLon,
+                                    obj.LatLongAlt.Lat, obj.LatLongAlt.Long)
+                                if d &lt; maxR then
+                                    tw_send(string.format(
+                                        "THREAT:%s|%s|%s|%.6f|%.6f|%.1f|%.4f|%d",
+                                        cat, tostring(id), obj.Name or "Unknown",
+                                        obj.LatLongAlt.Lat, obj.LatLongAlt.Long,
+                                        obj.LatLongAlt.Alt, obj.Heading or 0,
+                                        type(obj.Coalition)=="number" and obj.Coalition or 0))
+                                end
                             end
                         end
                     end
@@ -475,6 +492,8 @@ end</code></pre>
   <p>The right side of the app window contains an integrated settings panel:</p>
   <table>
     <tr><th>Setting</th><th>Description</th></tr>
+    <tr><td>&#9881; Single-Player mode</td><td>Toggle SP detection &mdash; uses <code>LoGetWorldObjects()</code> for full world scan (best for single-player / offline)</td></tr>
+    <tr><td>&#128225; Multiplayer (AWACS) mode</td><td>Toggle MP detection &mdash; uses friendly AWACS/EWR radar contacts (IC-safe for online servers)</td></tr>
     <tr><td>TTS Voice</td><td>Select from all installed Windows SAPI5 voices</td></tr>
     <tr><td>Audio Output</td><td>Choose which audio device plays the TTS callouts</td></tr>
     <tr><td>Speech Rate</td><td>Adjust TTS speed (words per minute)</td></tr>
@@ -493,28 +512,32 @@ end</code></pre>
   <div class="diagram">&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;        UDP (localhost:9876)       &#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;
 &#9474;      DCS World      &#9474; &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9658; &#9474;   DCS Auto-GCI      &#9474;
 &#9474;                     &#9474;   Player pos, threats,      &#9474;   (Python app)       &#9474;
-&#9474;  Export.lua polls   &#9474;   mission events             &#9474;                     &#9474;
-&#9474;  LoGetSelfData()    &#9474;                              &#9474;  &#8226; Bearing/distance  &#9474;
-&#9474;  LoGetWorldObjects()&#9474;                              &#9474;  &#8226; Clock position    &#9474;
-&#9474;                     &#9474;                              &#9474;  &#8226; GUI display       &#9474;
-&#9474;  Hook script sends  &#9474;                              &#9474;  &#8226; TTS callouts      &#9474;
-&#9474;  shot/hit events    &#9474;                              &#9474;                     &#9474;
+&#9474;  Export.lua polls   &#9474;   AWACS contacts, events     &#9474;                     &#9474;
+&#9474;  LoGetSelfData()    &#9474;                              &#9474;  &#8226; SP / MP mode     &#9474;
+&#9474;  LoGetWorldObjects()&#9474; (SP mode)                    &#9474;  &#8226; Bearing/distance &#9474;
+&#9474;                     &#9474;                              &#9474;  &#8226; Clock position   &#9474;
+&#9474;  Hook.lua relays    &#9474;                              &#9474;  &#8226; GUI display      &#9474;
+&#9474;  AWACS detections   &#9474; (MP mode)                    &#9474;  &#8226; TTS callouts     &#9474;
+&#9474;  + mission events   &#9474;                              &#9474;                     &#9474;
 &#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;                              &#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;</div>
   <p>The DCS Export script runs inside DCS World and polls player and world data 10 times per second.
-     It sends JSON-formatted threat data via UDP to the Auto-GCI app on <code>localhost:9876</code>.
-     The Python app receives the data, calculates bearings and clock positions relative to the player,
-     and displays threats in a color-coded table while announcing them via text-to-speech.</p>
+     It sends threat data via UDP to the Auto-GCI app on <code>localhost:9876</code>.
+     The optional Hook script captures mission events and queries AWACS/EWR radar contacts, relaying them
+     to the app from the hook environment. The Python app receives the data, calculates bearings and
+     clock positions relative to the player, and displays threats in a color-coded table while announcing
+     them via text-to-speech.</p>
 </section>
 
 <!-- DETECTION -->
 <section id="detection">
   <h2>Detection Methods</h2>
   <table>
-    <tr><th>Method</th><th>Source</th><th>Notes</th></tr>
-    <tr><td><code>LoGetWorldObjects()</code></td><td>Export.lua</td><td>Works in most DCS versions; may be restricted on multiplayer anti-cheat servers</td></tr>
-    <tr><td><code>LoGetTWSInfo()</code></td><td>Export.lua</td><td>F-15C specific &mdash; provides TWS radar contacts</td></tr>
-    <tr><td><code>LoGetLockedTargetInformation()</code></td><td>Export.lua</td><td>Works on most aircraft with radar</td></tr>
-    <tr><td>Mission events (<code>S_EVENT_SHOT</code>, etc.)</td><td>Hook script</td><td>Very reliable; requires MissionScripting.lua modification</td></tr>
+    <tr><th>Method</th><th>Source</th><th>Mode</th><th>Notes</th></tr>
+    <tr><td><code>LoGetWorldObjects()</code></td><td>Export.lua</td><td>Single-Player</td><td>Full world scan &mdash; automatically skipped when SP mode is off to avoid IC flags</td></tr>
+    <tr><td>AWACS / EWR radar contacts</td><td>Hook script</td><td>Multiplayer</td><td>Queries friendly coalition AWACS and EWR units &mdash; IC-safe</td></tr>
+    <tr><td><code>LoGetTWSInfo()</code></td><td>Export.lua</td><td>Always</td><td>F-15C specific &mdash; provides TWS radar contacts</td></tr>
+    <tr><td><code>LoGetLockedTargetInformation()</code></td><td>Export.lua</td><td>Always</td><td>Works on most aircraft with radar</td></tr>
+    <tr><td>Mission events (<code>S_EVENT_SHOT</code>, etc.)</td><td>Hook script</td><td>Always</td><td>Very reliable; no <code>MissionScripting.lua</code> changes needed</td></tr>
   </table>
 </section>
 
@@ -534,18 +557,44 @@ end</code></pre>
 <!-- HOOK SCRIPT -->
 <section id="hooksetup">
   <h2>Hook Script Setup (Optional)</h2>
-  <p>The hook script provides mission event detection (missile launches, hits, etc.) on top of the polling-based detection. It needs LuaSocket available in the mission environment:</p>
-  <ol>
-    <li>Navigate to your DCS installation folder</li>
-    <li>Edit <code>Scripts\MissionScripting.lua</code></li>
-    <li>Find and <strong>comment out</strong> these two lines (add <code>--</code> in front):
-      <pre><code>--sanitizeModule('os')
---sanitizeModule('io')</code></pre>
-    </li>
-  </ol>
+  <p>The hook script provides mission event detection (missile launches, hits, etc.) and AWACS/EWR-based threat detection for multiplayer servers.</p>
   <div class="note">
-    This is the same change required by MOOSE, MIST, and other DCS scripting frameworks.
-    If you already use those, you likely have this done.
+    <strong>No changes to <code>MissionScripting.lua</code> are required.</strong> All network I/O runs inside the
+    hook environment, which has unrestricted LuaSocket access. The mission scripting environment is only used
+    to read game-world data (events, coalition detections) &mdash; no desanitization needed.
+  </div>
+  <p>Just copy <code>ThreatWarnerHook.lua</code> to your <code>Saved Games\DCS\Scripts\Hooks\</code> folder and you're done.</p>
+</section>
+
+<!-- SP / MP MODES -->
+<section id="spmpmodes">
+  <h2>Single-Player &amp; Multiplayer Modes</h2>
+  <p>The app has two independent detection modes that can be toggled from the Monitor tab:</p>
+  <table>
+    <tr><th>Mode</th><th>Button</th><th>How It Works</th><th>Best For</th></tr>
+    <tr>
+      <td><strong>Single-Player</strong></td>
+      <td>&#9881; Single-Player</td>
+      <td>Uses <code>LoGetWorldObjects()</code> in Export.lua to scan the entire game world for enemy units</td>
+      <td>Offline missions, single-player campaigns</td>
+    </tr>
+    <tr>
+      <td><strong>Multiplayer</strong></td>
+      <td>&#128225; Multiplayer (AWACS)</td>
+      <td>Queries friendly coalition AWACS and EWR radar contacts via the Hook script &mdash; fully IC-safe</td>
+      <td>Online servers with integrity checks</td>
+    </tr>
+  </table>
+  <p>You can enable both modes at the same time, or use only one. The recommended setup:</p>
+  <ul>
+    <li><strong>Single-player:</strong> SP mode <strong>ON</strong>, MP mode <strong>OFF</strong> (default)</li>
+    <li><strong>Multiplayer servers:</strong> SP mode <strong>OFF</strong>, MP mode <strong>ON</strong> &mdash; avoids IC flags</li>
+    <li><strong>Permissive servers:</strong> Both <strong>ON</strong> for maximum coverage</li>
+  </ul>
+  <div class="note">
+    When SP mode is turned off, the Export script automatically stops calling <code>LoGetWorldObjects()</code> &mdash;
+    the function that triggers integrity check violations on protected servers. TWS contacts, locked targets,
+    and player telemetry continue to work regardless of mode.
   </div>
 </section>
 
@@ -939,7 +988,8 @@ end</code></pre>
   <table>
     <tr><th>Problem</th><th>Solution</th></tr>
     <tr><td>App says "WAITING FOR DCS"</td><td>Make sure the Lua scripts are in the correct Saved Games folder and you're in a mission</td></tr>
-    <tr><td>No threats appear</td><td><code>LoGetWorldObjects()</code> may be blocked. Install the Hook script for event-based detection</td></tr>
+    <tr><td>No threats appear (SP mode)</td><td><code>LoGetWorldObjects()</code> may be blocked on the server. Switch to <strong>Multiplayer (AWACS)</strong> mode instead</td></tr>
+    <tr><td>No threats appear (MP mode)</td><td>Make sure the Hook script is installed and your coalition has AWACS or EWR units with active radars</td></tr>
     <tr><td>TTS not working</td><td>Verify a voice is selected in the settings panel. Try the <strong>Test TTS</strong> button</td></tr>
     <tr><td>No voices in dropdown</td><td>Check <strong>Settings &rarr; Time &amp; Language &rarr; Speech</strong> and install voices</td></tr>
     <tr><td>Port conflict</td><td>Change the UDP port in both the app settings and the Lua script</td></tr>

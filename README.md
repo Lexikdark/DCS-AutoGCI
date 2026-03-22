@@ -15,6 +15,8 @@ A standalone companion app for **DCS World** that detects what is shooting at yo
 | **SAM / AAA detection** | Ground threats displayed with bearing and range |
 | **Missile warning** | Incoming missiles announced immediately |
 | **Formation grouping** | Groups of aircraft announced together — *"Group of 4, Flankers, 3 o'clock, 65 miles, Angels 25"* instead of individual spam |
+| **AWACS / EWR detection** | Multiplayer-safe detection using friendly coalition AWACS and EWR radar contacts |
+| **SP / MP mode toggle** | Switch between Single-Player (full world scan) and Multiplayer (AWACS-based) detection with one click |
 | **Mission events** | Shot launches, hits, and gun fire detected (with optional hook) |
 | **Natural TTS speech** | 350+ DCS unit names converted to spoken-friendly names (e.g. `FA-18C_hornet` → "Hornet") |
 | **Text-to-speech** | Spoken callouts like *"Warning! Missile, 3 o'clock, 12 miles"* |
@@ -72,7 +74,7 @@ To:    %USERPROFILE%\Saved Games\DCS\Scripts\ThreatWarnerExport.lua
        %USERPROFILE%\Saved Games\DCS.openbeta\Scripts\ThreatWarnerExport.lua
 ```
 
-**Hook script (optional — adds mission event detection):**
+**Hook script (optional — adds mission events + AWACS detection):**
 ```
 Copy:  dcs_lua\ThreatWarnerHook.lua
 To:    %USERPROFILE%\Saved Games\DCS\Scripts\Hooks\ThreatWarnerHook.lua
@@ -84,16 +86,9 @@ To:    %USERPROFILE%\Saved Games\DCS\Scripts\Hooks\ThreatWarnerHook.lua
 
 ### Hook Script Setup (Optional)
 
-The hook script provides mission event detection (someone fires a missile, you get hit, etc.) on top of the polling-based detection. It needs LuaSocket available:
+The hook script provides mission event detection (missile launches, hits, etc.) and AWACS/EWR-based threat detection for multiplayer servers. **No changes to `MissionScripting.lua` are required** — all network I/O runs in the hook environment, which has unrestricted LuaSocket access.
 
-1. Edit `<DCS Install Dir>\Scripts\MissionScripting.lua`
-2. Comment out these two lines (add `--` in front):
-```lua
---sanitizeModule('os')
---sanitizeModule('io')
-```
-
-> This is the same change required by MOOSE, MIST, and other DCS scripting frameworks.
+Just copy the file to the `Hooks` folder and you're done.
 
 ---
 
@@ -109,6 +104,8 @@ The right side of the app window contains an integrated settings panel:
 
 | Setting | Description |
 |---------|-------------|
+| **⚙ Single-Player** | Toggle SP detection mode — uses `LoGetWorldObjects()` for full world scan (best for single-player / offline) |
+| **📡 Multiplayer (AWACS)** | Toggle MP detection mode — uses friendly AWACS/EWR radar contacts (IC-safe for online servers) |
 | **TTS Voice** | Select from all installed Windows SAPI5 voices |
 | **Audio Output** | Choose which audio device plays the TTS callouts |
 | **Speech Rate** | Adjust TTS speed (words per minute) |
@@ -117,6 +114,8 @@ The right side of the app window contains an integrated settings panel:
 | **Threat Timeout** | Seconds before a threat is removed from the table |
 | **Test TTS** | Speaks a sample callout to verify voice and device |
 | **⚡ Unlock OneCore Voices** | One-click button to unlock ~20 hidden high-quality Windows voices (requires admin) |
+
+> **Tip:** You can enable both modes at the same time. For multiplayer servers, turn SP mode **off** and MP mode **on** to avoid integrity check (IC) flags. Both modes can be toggled independently at any time — even mid-mission.
 
 ### Testing Without DCS
 
@@ -137,23 +136,25 @@ The right side of the app window contains an integrated settings panel:
 ┌─────────────────────┐        UDP (localhost:9876)        ┌─────────────────────┐
 │      DCS World      │ ──────────────────────────────────►│   DCS Auto-GCI      │
 │                     │   Player position, threats,        │   (Python app)      │
-│  Export.lua polls   │   mission events                   │                     │
-│  LoGetSelfData()    │                                    │  • Calculates       │
-│  LoGetWorldObjects()│                                    │    bearing/distance  │
+│  Export.lua polls   │   AWACS contacts, events           │                     │
+│  LoGetSelfData()    │                                    │  • SP / MP mode     │
+│  LoGetWorldObjects()│ (SP mode)                          │  • Bearing/distance │
 │                     │                                    │  • Clock position   │
-│  Hook script sends  │                                    │  • GUI display      │
-│  shot/hit events    │                                    │  • TTS callouts     │
+│  Hook.lua relays    │                                    │  • GUI display      │
+│  AWACS detections   │ (MP mode)                          │  • TTS callouts     │
+│  + mission events   │                                    │                     │
 └─────────────────────┘                                    └─────────────────────┘
 ```
 
 ### Detection Methods
 
-| Method | Source | Reliability |
-|--------|--------|-------------|
-| `LoGetWorldObjects()` | Export.lua | Works in most DCS versions; may be restricted in multiplayer anti-cheat servers |
-| `LoGetTWSInfo()` | Export.lua | F-15C specific — provides TWS radar contacts |
-| `LoGetLockedTargetInformation()` | Export.lua | Works on most aircraft with radar |
-| Mission events (`S_EVENT_SHOT`, etc.) | Hook script | Very reliable; requires MissionScripting.lua modification |
+| Method | Source | Mode | Notes |
+|--------|--------|------|-------|
+| `LoGetWorldObjects()` | Export.lua | Single-Player | Full world scan — skipped automatically when SP mode is off to avoid IC flags |
+| AWACS / EWR radar contacts | Hook script | Multiplayer | Queries friendly coalition AWACS and EWR units for their radar detections — IC-safe |
+| `LoGetTWSInfo()` | Export.lua | Always | F-15C specific — provides TWS radar contacts |
+| `LoGetLockedTargetInformation()` | Export.lua | Always | Works on most aircraft with radar |
+| Mission events (`S_EVENT_SHOT`, etc.) | Hook script | Always | Very reliable; no MissionScripting.lua changes needed |
 
 ---
 
@@ -178,7 +179,8 @@ For the DCS Lua scripts, edit the constants at the top of each file:
 | Problem | Solution |
 |---------|----------|
 | App says "WAITING FOR DCS" | Make sure the Lua scripts are in the correct Saved Games folder and you're in a mission |
-| No threats appear | `LoGetWorldObjects()` may be blocked. Install the Hook script for event-based detection |
+| No threats appear in SP mode | `LoGetWorldObjects()` may be blocked on the server. Switch to **Multiplayer (AWACS)** mode instead |
+| No threats appear in MP mode | Make sure the Hook script is installed and your coalition has AWACS or EWR units with active radars |
 | TTS not working | Verify a voice is selected in the settings panel. Try the **Test TTS** button |
 | No voices in dropdown | Check **Settings → Time & Language → Speech** and install voices |
 | Port conflict | Change the UDP port in both the app settings and the Lua script |
@@ -215,7 +217,8 @@ DCS-ThreatWarner/
 
 ## Limitations
 
-- **`LoGetWorldObjects()` availability** — Some DCS multiplayer servers with integrity checks may block this function. The hook script provides an alternative detection path.
+- **`LoGetWorldObjects()` on multiplayer servers** — Some servers with integrity checks block this function. Use the **Multiplayer (AWACS)** detection mode on those servers — it uses coalition AWACS/EWR radar contacts instead and is fully IC-safe.
+- **AWACS detection depends on friendly radar coverage** — In Multiplayer mode, you only see what your coalition's AWACS and EWR units can detect. Threats outside their radar range won't appear. Make sure your side has active AWACS aircraft or ground-based EWR.
 - **Aircraft-specific RWR** — The current version uses universal detection. Future versions could read aircraft-specific RWR/TEWS cockpit parameters for more detailed threat info.
 - **Friendly fire** — The app only tracks objects from a different coalition than the player. Friendly units are ignored.
 

@@ -66,7 +66,7 @@ if errorlevel 1 (
     goto :package
 )
 
-set "UI_EXT=%ROOT%.wix\extensions\WixToolset.UI.wixext\6.0.2\wixext6\WixToolset.UI.wixext.dll"
+set "UI_EXT=C:\DCS-ThreatWarner\.wix\extensions\WixToolset.UI.wixext\6.0.2\wixext6\WixToolset.UI.wixext.dll"
 wix build -o "%ROOT%release\DCS_AutoGCI_Setup.msi" "%SRC%Package.wxs" -ext "%UI_EXT%"
 if errorlevel 1 (
     echo WARNING: MSI installer build failed.
@@ -78,7 +78,7 @@ echo MSI built (intermediate)
 :: Build the setup.exe bootstrapper (wraps MSI with Install/Uninstall UI)
 echo.
 echo [3/3] Building Setup.exe bootstrapper...
-set "BAL_EXT=%ROOT%.wix\extensions\WixToolset.Bal.wixext\6.0.2\wixext6\WixToolset.BootstrapperApplications.wixext.dll"
+set "BAL_EXT=C:\DCS-ThreatWarner\.wix\extensions\WixToolset.Bal.wixext\6.0.2\wixext6\WixToolset.BootstrapperApplications.wixext.dll"
 if exist "%BAL_EXT%" (
     wix build -o "%ROOT%release\DCS_AutoGCI_Setup.exe" "%SRC%Bundle.wxs" -ext "%BAL_EXT%"
     if errorlevel 1 (

@@ -25,6 +25,9 @@ do -- wrap in do...end so local names never collide with other scripts
     -- ── Internal state ────────────────────────────────────────────────
     local tw_udp     = nil
     local tw_started = false
+    local tw_sp_mode = true           -- SP detection on by default
+    local tw_modeCheckNext = 0        -- when to re-read the flag file
+    local tw_MODE_FILE = os.getenv("TEMP") .. "\\autogci_sp_mode.txt"
 
     -- ── LuaSocket loader ──────────────────────────────────────────────
     local function tw_initSocket()
@@ -68,6 +71,22 @@ do -- wrap in do...end so local names never collide with other scripts
     local tw_prevBefore     = LuaExportBeforeNextFrame
     local tw_prevAfter      = LuaExportAfterNextFrame
 
+    -- ── Read the SP-mode flag file (written by the companion app) ─────
+    local function tw_readModeFlag(t)
+        if t < tw_modeCheckNext then return end
+        tw_modeCheckNext = t + 2.0   -- re-check every 2 seconds
+        local f = io.open(tw_MODE_FILE, "r")
+        if f then
+            local v = f:read("*l")
+            f:close()
+            if v == "0" then tw_sp_mode = false
+            else              tw_sp_mode = true
+            end
+        else
+            tw_sp_mode = true  -- default: SP on when flag missing
+        end
+    end
+
     -- ── LuaExportStart ────────────────────────────────────────────────
     LuaExportStart = function()
         local socketLib = tw_initSocket()
@@ -103,6 +122,9 @@ do -- wrap in do...end so local names never collide with other scripts
             return t + 1.0
         end
 
+        -- Re-read the mode flag periodically
+        tw_readModeFlag(t)
+
         -- Player telemetry
         local selfOk, selfData = pcall(LoGetSelfData)
         if selfOk and selfData then
@@ -118,48 +140,51 @@ do -- wrap in do...end so local names never collide with other scripts
             local myLon  = selfData.LatLongAlt.Long
 
             -- ── World objects (threats) ───────────────────────────────
-            -- LoGetWorldObjects may be restricted in some DCS versions.
-            local wOk, objects = pcall(LoGetWorldObjects)
-            if wOk and objects then
-                for id, obj in pairs(objects) do
-                    if tw_isEnemy(myCoal, obj.Coalition) and obj.Type and obj.LatLongAlt then
-                        local lvl1 = obj.Type.level1
-                        local category = nil
-                        local maxRange = TW_MAX_RANGE_M
+            -- Only called when Single-Player mode is active (avoids IC
+            -- flags on multiplayer servers that restrict this function).
+            if tw_sp_mode then
+                local wOk, objects = pcall(LoGetWorldObjects)
+                if wOk and objects then
+                    for id, obj in pairs(objects) do
+                        if tw_isEnemy(myCoal, obj.Coalition) and obj.Type and obj.LatLongAlt then
+                            local lvl1 = obj.Type.level1
+                            local category = nil
+                            local maxRange = TW_MAX_RANGE_M
 
-                        if lvl1 == 4 then          -- Weapon (missile / bomb / rocket)
-                            -- Skip artillery shells (level2==1) to avoid spam
-                            if obj.Type.level2 ~= 1 then
-                                category = "WEAPON"
-                                maxRange = TW_MAX_WPN_M
+                            if lvl1 == 4 then          -- Weapon (missile / bomb / rocket)
+                                -- Skip artillery shells (level2==1) to avoid spam
+                                if obj.Type.level2 ~= 1 then
+                                    category = "WEAPON"
+                                    maxRange = TW_MAX_WPN_M
+                                end
+                            elseif lvl1 == 1 then      -- Aircraft / Helicopter
+                                category = "AIR"
+                            elseif lvl1 == 2 then      -- Ground (SAM, AAA, vehicles)
+                                category = "GROUND"
                             end
-                        elseif lvl1 == 1 then      -- Aircraft / Helicopter
-                            category = "AIR"
-                        elseif lvl1 == 2 then      -- Ground (SAM, AAA, vehicles)
-                            category = "GROUND"
-                        end
 
-                        if category then
-                            local d = tw_approxDistM(myLat, myLon,
-                                                     obj.LatLongAlt.Lat,
-                                                     obj.LatLongAlt.Long)
-                            if d < maxRange then
-                                tw_send(string.format(
-                                    "THREAT:%s|%s|%s|%.6f|%.6f|%.1f|%.4f|%d",
-                                    category,
-                                    tostring(id),
-                                    obj.Name or "Unknown",
-                                    obj.LatLongAlt.Lat,
-                                    obj.LatLongAlt.Long,
-                                    obj.LatLongAlt.Alt,
-                                    obj.Heading or 0,
-                                    type(obj.Coalition) == "number"
-                                        and obj.Coalition or 0))
+                            if category then
+                                local d = tw_approxDistM(myLat, myLon,
+                                                         obj.LatLongAlt.Lat,
+                                                         obj.LatLongAlt.Long)
+                                if d < maxRange then
+                                    tw_send(string.format(
+                                        "THREAT:%s|%s|%s|%.6f|%.6f|%.1f|%.4f|%d",
+                                        category,
+                                        tostring(id),
+                                        obj.Name or "Unknown",
+                                        obj.LatLongAlt.Lat,
+                                        obj.LatLongAlt.Long,
+                                        obj.LatLongAlt.Alt,
+                                        obj.Heading or 0,
+                                        type(obj.Coalition) == "number"
+                                            and obj.Coalition or 0))
+                                end
                             end
                         end
                     end
                 end
-            end
+            end  -- tw_sp_mode
 
             -- ── Fallback: TWS contacts (F-15C) ───────────────────────
             local twsOk, twsInfo = pcall(LoGetTWSInfo)
