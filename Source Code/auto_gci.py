@@ -28,7 +28,7 @@ except ImportError:
 
 # --- Configuration ---
 APP_VERSION = "1.0.0"
-GITHUB_REPO = ""  # e.g. "YourUsername/DCS-AutoGCI"
+GITHUB_REPO = "Lexikdark/DCS-AutoGCI"
 UDP_HOST = "127.0.0.1"
 UDP_PORT = 9876
 GUI_UPDATE_MS = 500
